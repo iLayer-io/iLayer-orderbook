@@ -94,8 +94,8 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
           },
           outputPercentages: calculateDefaultPercentages(outputToken ? 1 : 0),
         });
-      } catch (err: any) {
-        console.error(err.message);
+      } catch (err) {
+        console.error(err);
       }
     }
   }, [config]);

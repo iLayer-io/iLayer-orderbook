@@ -3,7 +3,7 @@ import { useConfig } from "@/contexts/ConfigContext";
 import { useSwapContext } from "@/contexts/SwapContext";
 import SelectSingleToken from "./SelectSingleToken";
 import SelectMultipleTokens from "./SelectMultipleTokens";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 const TokensTabContent = ({ direction }: { direction: Direction }) => {
   const { config } = useConfig();
@@ -18,8 +18,13 @@ const TokensTabContent = ({ direction }: { direction: Direction }) => {
     direction === Direction.Input
       ? swapData.input.tokens.map((t) => t.token)
       : swapData.output.tokens.map((t) => t.token);
-  const tokens =
-    config?.find((network) => network.name === selectedNetwork)?.tokens || [];
+
+    const tokens = useMemo(() => {
+      return (
+        config?.find((network) => network.name === selectedNetwork)?.tokens ||
+        []
+      );
+    }, [config, selectedNetwork]);
 
   const updateTokens =
     direction === Direction.Input ? updateInputTokens : updateOutputTokens;

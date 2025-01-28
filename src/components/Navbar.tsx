@@ -5,7 +5,7 @@ export default function NavBar() {
   return (
     <Box w={"100vw"}>
       <Flex justify={"space-between"} p={10}>
-        <Image src="logo.svg" fit="contain" />
+        <Image src="logo.svg" alt="iLayer" fit="contain" />
         <ColorModeButton size={"xs"} ml={"auto"} />
       </Flex>
     </Box>

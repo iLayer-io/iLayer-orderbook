@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Card,
   Flex,
@@ -74,7 +74,7 @@ export default function QuotesCard() {
     }
   };
 
-  const generateQuotes = async () => {
+  const generateQuotes = useCallback(async () => {
     if (!shouldFetchQuotes()) {
       console.warn("Conditions not met for fetching quotes.");
       return;
@@ -145,7 +145,15 @@ export default function QuotesCard() {
     } finally {
       setIsFetching(false);
     }
-  };
+  }, [
+    swapData,
+    outputPercentages,
+    shouldFetchQuotes,
+    fetchTokenPrices,
+    setIsFetching,
+    setLastInputState,
+    setQuotes,
+  ]);
 
   const handleSelectQuote = (quote: Quote) => {
     quote.outputTokens.forEach((token) => {
@@ -166,7 +174,7 @@ export default function QuotesCard() {
     }, RATE_LIMIT_INTERVAL);
 
     return () => clearInterval(intervalId);
-  }, [swapData, isFetching]);
+  }, [isFetching, generateQuotes]);
 
   const hasZeroAmountInput = swapData.input.tokens.some(
     (token) => token.amount === 0

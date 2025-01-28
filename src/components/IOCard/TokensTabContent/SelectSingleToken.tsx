@@ -27,7 +27,7 @@ const SelectSingleToken = ({
   return (
     <Card.Body gap={2}>
       <Card.Title fontSize={"xs"}>Select a token</Card.Title>
-      {tokens.map((token, idx) => (
+      {tokens.map((token) => (
         <Checkbox
           key={token.name}
           checked={selectedTokens.some((t) => t.name === token.name)}

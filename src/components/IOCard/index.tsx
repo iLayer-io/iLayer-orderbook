@@ -59,7 +59,12 @@ export default function IOCard({ direction, setActiveCard }: IOCardProps) {
                 variant={isSelected ? "solid" : "surface"}
                 onClick={() => handleNetworkChange(network.name)}
               >
-                <Image src={`networks/${network.icon}`} fit={"contain"} h={6} />
+                <Image
+                  src={`networks/${network.icon}`}
+                  alt={network.name}
+                  fit={"contain"}
+                  h={6}
+                />
               </IconButton>
             );
           })}
