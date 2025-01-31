@@ -3,7 +3,6 @@ import { Provider as ChackraProvider } from "../components/ui/provider";
 import { ColorModeProvider } from "@/components/ui/color-mode";
 import { ConfigProvider } from "@/contexts/ConfigContext";
 import { SwapProvider } from "@/contexts/SwapContext";
-// import "./globals.css";
 
 export const metadata: Metadata = {
   title: "iLayer Swap",

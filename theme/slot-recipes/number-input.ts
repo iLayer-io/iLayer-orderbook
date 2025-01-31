@@ -2,7 +2,16 @@ import { defineSlotRecipe } from "@chakra-ui/react"
 
 export const numberInputSlotRecipe = defineSlotRecipe({
   className: "chakra-number-input",
-  slots: ["root", "label", "input", "control", "valueText", "incrementTrigger", "decrementTrigger", "scrubber"],
+  slots: [
+    "root",
+    "label",
+    "input",
+    "control",
+    "valueText",
+    "incrementTrigger",
+    "decrementTrigger",
+    "scrubber",
+  ],
   base: {
     root: {
       position: "relative",
@@ -177,10 +186,21 @@ export const numberInputSlotRecipe = defineSlotRecipe({
           },
         },
       },
+      ilayer: {
+        input: {
+          bg: "transparent",
+          borderWidth: "0px",
+          px: "0",
+          focusVisibleRing: "none",
+        },
+        control: {
+          display: "none",
+        },
+      },
     },
   },
   defaultVariants: {
     size: "md",
     variant: "outline",
   },
-})
+});
