@@ -1,12 +1,15 @@
 import { ActiveCard, Direction } from "@/types";
 import {
+  Avatar,
   Box,
   Button,
   Card,
+  Flex,
+  GridItem,
   Group,
   Highlight,
   IconButton,
-  InputAddon,
+  SimpleGrid,
   Text,
 } from "@chakra-ui/react";
 import {
@@ -16,6 +19,8 @@ import {
 import { IoTrash } from "react-icons/io5";
 import { BsPlus } from "react-icons/bs";
 import { useSwapContext } from "@/contexts/SwapContext";
+import { PiCaretDownBold } from "react-icons/pi";
+import { useConfig } from "@/contexts/ConfigContext";
 
 interface ExchangeOutputSectionProps {
   setActiveCard: (card: ActiveCard) => void;
@@ -37,71 +42,147 @@ export default function ExchangeOutputSection({
   error,
 }: ExchangeOutputSectionProps) {
   const { swapData } = useSwapContext();
+  const { getNetworkIcon } = useConfig();
 
   return (
     <>
-      <Card.Title fontSize={"xs"}>
-        <Box
-          as="span"
-          onClick={() => setActiveCard(ActiveCard.IOOutput)}
-          cursor="pointer"
-        >
-          <Highlight
-            query={swapData.output.network}
-            styles={{ color: "teal.600" }}
+      <Card.Root variant={"outline"}>
+        <Card.Title fontSize={"xs"} p={3} pb={0}>
+          <Box
+            display={"flex"}
+            alignItems={"center"}
+            onClick={() => setActiveCard(ActiveCard.IOOutput)}
+            cursor="pointer"
           >
-            {`To ${swapData.output.network}`}
-          </Highlight>
-        </Box>
-      </Card.Title>
-      {swapData.output.tokens.map((token, idx) => (
-        <Group attached key={`${token.token.address}-${idx}`}>
-          <InputAddon fontWeight={"bold"}>{token.token.symbol}</InputAddon>
-          <NumberInputRoot w={"100%"} size="xs" step={0.01} min={0} readOnly>
-            <NumberInputField value={token.amount} />
-          </NumberInputRoot>
-          {swapData.output.tokens.length > 1 && (
-            <NumberInputRoot
-              w={"120px"}
-              size="xs"
-              step={1}
-              min={0}
-              spinOnPress={false}
-            >
-              <NumberInputField
-                placeholder="%"
-                value={outputPercentages[idx] || 0}
-                onChange={(e) => handlePercentageChange(idx, e.target.value)}
+            <Text mr={1}>To</Text>
+
+            <Avatar.Root mr={1} h={4} w={4}>
+              <Avatar.Image
+                src={`networks/${getNetworkIcon(swapData.output.network)}`}
               />
-            </NumberInputRoot>
-          )}
-          {(idx > 0 || swapData.output.tokens.length > 1) && (
-            <IconButton
-              aria-label="Remove Token"
-              size={"xs"}
-              ml={"auto"}
-              onClick={() => handleRemoveToken(Direction.Output, idx)}
+            </Avatar.Root>
+            <Highlight
+              query={swapData.output.network}
+              styles={{ color: "teal.600" }}
             >
-              <IoTrash />
-            </IconButton>
+              {swapData.output.network}
+            </Highlight>
+          </Box>
+        </Card.Title>
+        <Card.Body p={3} pr={0} mx={2}>
+          {swapData.output.tokens.map((token, idx) => (
+            <SimpleGrid columns={6} key={`${token.token.address}-${idx}`}>
+              <GridItem colSpan={swapData.output.tokens.length > 1 ? 3 : 4}>
+                <NumberInputRoot
+                  w={"100%"}
+                  size={"lg"}
+                  min={0}
+                  fontWeight={"bold"}
+                  variant={"ilayer"}
+                  readOnly
+                >
+                  <NumberInputField
+                    placeholder="0"
+                    value={token.amount || ""}
+                  />
+                </NumberInputRoot>
+              </GridItem>
+              {swapData.output.tokens.length > 1 && (
+                <GridItem colSpan={1}>
+                  <Flex alignItems={"center"}>
+                    <Text mr={1} fontWeight={"bold"}>
+                      %
+                    </Text>
+                    <NumberInputRoot
+                      w={"100%"}
+                      size={"lg"}
+                      min={0}
+                      fontWeight={"bold"}
+                      variant={"ilayer"}
+                    >
+                      <NumberInputField
+                        placeholder="0"
+                        value={outputPercentages[idx] || ""}
+                        onChange={(e) =>
+                          handlePercentageChange(idx, e.target.value)
+                        }
+                      />
+                    </NumberInputRoot>
+                  </Flex>
+                </GridItem>
+              )}
+              <GridItem
+                colSpan={2}
+                display={"flex"}
+                justifyContent={"flex-end"}
+                alignItems={"center"}
+              >
+                <Group attached>
+                  <Button
+                    w={"80px"}
+                    p={2}
+                    size={"xs"}
+                    fontWeight={"bold"}
+                    borderRadius={"xl"}
+                    display={"flex"}
+                    justifyContent={"space-between"}
+                    onClick={() => setActiveCard(ActiveCard.IOOutput)}
+                  >
+                    <Avatar.Root h={5} w={5}>
+                      <Avatar.Image src={`tokens/${token.token.icon}`} />
+                    </Avatar.Root>
+                    <Flex>{token.token.symbol}</Flex>
+                    <Flex></Flex>
+                  </Button>
+                  {idx > 0 || swapData.output.tokens.length > 1 ? (
+                    <IconButton
+                      aria-label="Remove Token"
+                      size={"xs"}
+                      p={0}
+                      fontWeight={"bold"}
+                      borderLeftColor={"#eee"}
+                      borderRightRadius={"xl"}
+                      onClick={() => handleRemoveToken(Direction.Output, idx)}
+                    >
+                      <IoTrash />
+                    </IconButton>
+                  ) : (
+                    <IconButton
+                      aria-label="Change Token"
+                      size={"xs"}
+                      p={0}
+                      fontWeight={"bold"}
+                      borderLeftColor={"#eee"}
+                      borderRightRadius={"xl"}
+                      onClick={() => setActiveCard(ActiveCard.IOOutput)}
+                    >
+                      <PiCaretDownBold />
+                    </IconButton>
+                  )}
+                </Group>
+              </GridItem>
+            </SimpleGrid>
+          ))}
+
+          {showAddTokenOutput || showAddTokenBoth ? (
+            <Button
+              w={"100%"}
+              mt={2}
+              size={"xs"}
+              variant={"ghost"}
+              onClick={() => setActiveCard(ActiveCard.IOOutput)}
+            >
+              <BsPlus /> Add Token
+            </Button>
+          ) : null}
+
+          {error && (
+            <Text fontSize="xs" color="red.600" mt={2}>
+              {error}
+            </Text>
           )}
-        </Group>
-      ))}
-      {showAddTokenOutput || showAddTokenBoth ? (
-        <Button
-          w={"100%"}
-          size={"xs"}
-          variant={"ghost"}
-          onClick={() => setActiveCard(ActiveCard.IOOutput)}
-        >
-          <BsPlus /> Add Token
-        </Button>
-      ) : null}
-      {error && (
-        <Text fontSize="xs" color="red.600" mt={2}>
-          {error}
-        </Text>
-      )}
+        </Card.Body>
+      </Card.Root>
     </>
   );
 }

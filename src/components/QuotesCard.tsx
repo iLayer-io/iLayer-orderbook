@@ -40,7 +40,7 @@ export default function QuotesCard() {
   const [isFetching, setIsFetching] = useState<boolean>(false);
   const [lastInputState, setLastInputState] = useState<string>("");
 
-  const generateStateHash = (): string => {
+  const generateStateHash = useCallback((): string => {
     const inputState = swapData.input.tokens
       .map((token) => `${token.token.name}:${token.amount}`)
       .join(",");
@@ -48,31 +48,34 @@ export default function QuotesCard() {
       .map((token, idx) => `${token.token.name}:${outputPercentages[idx] || 0}`)
       .join(",");
     return `${inputState}|${outputState}`;
-  };
+  }, [swapData.input.tokens, swapData.output.tokens, outputPercentages]);
 
-  const shouldFetchQuotes = (): boolean => {
+  const shouldFetchQuotes = useCallback((): boolean => {
     const stateHash = generateStateHash();
     const hasZeroAmount = swapData.input.tokens.some(
       (token) => token.amount === 0
     );
     return stateHash !== lastInputState && !hasZeroAmount;
-  };
+  }, [generateStateHash, swapData.input.tokens, lastInputState]);
 
-  const fetchTokenPrices = async (ids: string[]): Promise<TokenPrice> => {
-    try {
-      const idsString = ids.join(",");
-      const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${idsString}&vs_currencies=usd`
-      );
-      if (!response.ok) {
-        throw new Error(`API responded with status ${response.status}`);
+  const fetchTokenPrices = useCallback(
+    async (ids: string[]): Promise<TokenPrice> => {
+      try {
+        const idsString = ids.join(",");
+        const response = await fetch(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${idsString}&vs_currencies=usd`
+        );
+        if (!response.ok) {
+          throw new Error(`API responded with status ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error("Error fetching token prices:", error);
+        return {};
       }
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching token prices:", error);
-      return {};
-    }
-  };
+    },
+    []
+  );
 
   const generateQuotes = useCallback(async () => {
     if (!shouldFetchQuotes()) {
@@ -153,7 +156,9 @@ export default function QuotesCard() {
     setIsFetching,
     setLastInputState,
     setQuotes,
+    generateStateHash,
   ]);
+  
 
   const handleSelectQuote = (quote: Quote) => {
     quote.outputTokens.forEach((token) => {

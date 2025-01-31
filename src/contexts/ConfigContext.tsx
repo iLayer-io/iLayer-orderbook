@@ -7,12 +7,13 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
-import { Config } from "@/types";
+import { Config, Network } from "@/types";
 
 type ConfigContextType = {
   config: Config | null;
   loading: boolean;
   error: string | null;
+  getNetworkIcon: (networkName: string) => string | null;
 };
 
 const ConfigContext = createContext<ConfigContextType | null>(null);
@@ -54,8 +55,16 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({
     fetchConfig();
   }, [configPath]);
 
+  const getNetworkIcon = (networkName: string): string | null => {
+    if (!config) return null;
+    const network = config.find(
+      (n: Network) => n.name.toLowerCase() === networkName.toLowerCase()
+    );
+    return network ? network.icon : null;
+  };
+
   return (
-    <ConfigContext.Provider value={{ config, loading, error }}>
+    <ConfigContext.Provider value={{ config, loading, error, getNetworkIcon }}>
       {children}
     </ConfigContext.Provider>
   );

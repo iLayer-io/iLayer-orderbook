@@ -44,7 +44,7 @@ const SelectMultipleTokens = ({
               alignItems={"center"}
             >
               <Avatar.Root borderless={true} size={"xs"}>
-                <Avatar.Image src={`defi/${token.icon}`} />
+                <Avatar.Image src={`tokens/${token.icon}`} />
               </Avatar.Root>
             </GridItem>
             <GridItem colSpan={6}>

@@ -1,4 +1,4 @@
-import { Card, Separator } from "@chakra-ui/react";
+import { Box, Card, Float, IconButton, Separator } from "@chakra-ui/react";
 import { useSwapContext } from "@/contexts/SwapContext";
 
 import { ActiveCard, Direction } from "@/types";
@@ -7,6 +7,7 @@ import ExchangeFooter from "./ExchangeFooter";
 import ExchangeOutputSection from "./ExchangeOutputSection";
 import ExchangeInputSection from "./ExchangeInputSection";
 import ExchangeHeader from "./ExchangeHeader";
+import { GoArrowDown } from "react-icons/go";
 
 interface ExchangeCardProps {
   setActiveCard: (card: ActiveCard) => void;
@@ -20,6 +21,7 @@ export default function ExchangeCard({ setActiveCard }: ExchangeCardProps) {
     updateInputAmount,
     updateOutputPercentages,
     updateOutputAmount,
+    invertSwap,
   } = useSwapContext();
 
   const calculateDefaultPercentages = (count: number): number[] => {
@@ -133,7 +135,7 @@ export default function ExchangeCard({ setActiveCard }: ExchangeCardProps) {
     <Card.Root width="400px" variant={"outline"} size={"sm"} maxH={"70vh"}>
       <ExchangeHeader setActiveCard={setActiveCard} />
       <Separator />
-      <Card.Body gap="2">
+      <Card.Body gap="2" overflowY={"scroll"}>
         <ExchangeInputSection
           setActiveCard={setActiveCard}
           handleInputChange={handleInputChange}
@@ -141,6 +143,17 @@ export default function ExchangeCard({ setActiveCard }: ExchangeCardProps) {
           showAddTokenInput={showAddTokenInput}
           showAddTokenBoth={showAddTokenBoth}
         />
+        <Box position="relative" zIndex={1000}>
+          <Float placement="middle-center">
+            <IconButton
+              size={"xs"}
+              border={"3px solid transparent"}
+              onClick={() => invertSwap()}
+            >
+              <GoArrowDown />
+            </IconButton>
+          </Float>
+        </Box>
 
         <ExchangeOutputSection
           setActiveCard={setActiveCard}
