@@ -103,20 +103,20 @@
     "icon": "arbitrum.png",
     "tokens": [
       {
-        "name": "Ethereum",
-        "symbol": "ETH",
-        "address": "0x0000000000000000000000000000000000000000",
-        "decimals": 18,
-        "icon": "eth.webp",
-        "coingeckoId": "ethereum"
-      },
-      {
         "name": "Arbitrum",
         "symbol": "ARB",
         "address": "0x912CE59144191C1204E64559FE8253a0e49E6548",
         "decimals": 18,
         "icon": "arb.webp",
         "coingeckoId": "arbitrum"
+      },
+      {
+        "name": "Ethereum",
+        "symbol": "ETH",
+        "address": "0x0000000000000000000000000000000000000000",
+        "decimals": 18,
+        "icon": "eth.webp",
+        "coingeckoId": "ethereum"
       },
       {
         "name": "Tether USD",
@@ -143,20 +143,20 @@
     "icon": "optimism.png",
     "tokens": [
       {
-        "name": "Ethereum",
-        "symbol": "ETH",
-        "address": "0x0000000000000000000000000000000000000000",
-        "decimals": 18,
-        "icon": "eth.webp",
-        "coingeckoId": "ethereum"
-      },
-      {
         "name": "Optimism",
         "symbol": "OP",
         "address": "0x4200000000000000000000000000000000000042",
         "decimals": 18,
         "icon": "op.webp",
         "coingeckoId": "optimism"
+      },
+      {
+        "name": "Ethereum",
+        "symbol": "ETH",
+        "address": "0x0000000000000000000000000000000000000000",
+        "decimals": 18,
+        "icon": "eth.webp",
+        "coingeckoId": "ethereum"
       },
       {
         "name": "Tether USD",

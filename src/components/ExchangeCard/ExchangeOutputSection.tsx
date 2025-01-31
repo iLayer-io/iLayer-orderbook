@@ -47,7 +47,7 @@ export default function ExchangeOutputSection({
   return (
     <>
       <Card.Root variant={"outline"}>
-        <Card.Title fontSize={"xs"} p={3} pb={0}>
+        <Card.Title fontSize={"sm"} p={3} pb={0}>
           <Box
             display={"flex"}
             alignItems={"center"}
@@ -121,7 +121,7 @@ export default function ExchangeOutputSection({
                   <Button
                     w={"80px"}
                     p={2}
-                    size={"xs"}
+                    size={"sm"}
                     fontWeight={"bold"}
                     borderRadius={"xl"}
                     display={"flex"}
@@ -137,7 +137,7 @@ export default function ExchangeOutputSection({
                   {idx > 0 || swapData.output.tokens.length > 1 ? (
                     <IconButton
                       aria-label="Remove Token"
-                      size={"xs"}
+                      size={"sm"}
                       p={0}
                       fontWeight={"bold"}
                       borderLeftColor={"#eee"}
@@ -149,7 +149,7 @@ export default function ExchangeOutputSection({
                   ) : (
                     <IconButton
                       aria-label="Change Token"
-                      size={"xs"}
+                      size={"sm"}
                       p={0}
                       fontWeight={"bold"}
                       borderLeftColor={"#eee"}
@@ -168,7 +168,7 @@ export default function ExchangeOutputSection({
             <Button
               w={"100%"}
               mt={2}
-              size={"xs"}
+              size={"sm"}
               variant={"ghost"}
               onClick={() => setActiveCard(ActiveCard.IOOutput)}
             >
@@ -177,7 +177,7 @@ export default function ExchangeOutputSection({
           ) : null}
 
           {error && (
-            <Text fontSize="xs" color="red.600" mt={2}>
+            <Text fontSize="sm" color="red.600" mt={2}>
               {error}
             </Text>
           )}

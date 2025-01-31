@@ -16,9 +16,14 @@ export default function Home() {
 
   return (
     <Flex w={"100vw"} h={"100vh"}>
-      <Flex flexFlow={"column"} justify={"start"} alignItems={"center"}>
+      <Flex flexFlow={"column"} justify={"start"} alignItems={"center"} pb={6}>
         <Navbar />
-        <Flex alignItems={"flex-start"} gap="4" my={10}>
+        <Flex
+          direction={{ base: "column", lg: "row" }}
+          alignItems={{ base: "center", lg: "flex-start" }}
+          gap="4"
+          my={10}
+        >
           {/* Rendering dinamico basato sullo stato */}
           {activeCard === ActiveCard.Exchange && (
             <ExchangeCard setActiveCard={setActiveCard} />

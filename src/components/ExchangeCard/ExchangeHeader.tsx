@@ -13,7 +13,7 @@ export default function ExchangeHeader({ setActiveCard }: ExchangeHeaderProps) {
         <Heading>Swap</Heading>
         <IconButton
           aria-label="Settings"
-          size={"xs"}
+          size={"sm"}
           ml={"auto"}
           onClick={() => setActiveCard(ActiveCard.Settings)}
         >

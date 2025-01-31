@@ -77,6 +77,18 @@ export default function QuotesCard() {
     []
   );
 
+  function getRandomBetween(
+    min: number,
+    max: number,
+    decimals: number = 2
+  ): number {
+    if (min > max) {
+      [min, max] = [max, min];
+    }
+    const factor = Math.pow(10, decimals);
+    return Math.round((Math.random() * (max - min) + min) * factor) / factor;
+  }
+
   const generateQuotes = useCallback(async () => {
     if (!shouldFetchQuotes()) {
       console.warn("Conditions not met for fetching quotes.");
@@ -102,7 +114,7 @@ export default function QuotesCard() {
         const value = token.amount * price;
         return {
           symbol: token.token.symbol,
-          amount: token.amount.toFixed(2),
+          amount: token.amount.toFixed(4),
           value,
         };
       });
@@ -117,9 +129,11 @@ export default function QuotesCard() {
         const estimatedAmount = (totalInputValue * (percentage / 100)) / price;
         return {
           symbol: token.token.symbol,
-          amount: estimatedAmount.toFixed(2),
+          amount: estimatedAmount.toFixed(4),
         };
       });
+
+      const offset = getRandomBetween(0.98, 0.9, 18);
 
       setQuotes([
         {
@@ -127,7 +141,7 @@ export default function QuotesCard() {
           inputTokens,
           outputTokens: outputTokens.map((token) => ({
             ...token,
-            amount: (parseFloat(token.amount) * 0.99).toFixed(2),
+            amount: (parseFloat(token.amount) * 0.99).toFixed(4),
           })),
           inputValueUSD: totalInputValue.toFixed(2),
           outputValueUSD: (totalInputValue * 0.99).toFixed(2),
@@ -137,10 +151,10 @@ export default function QuotesCard() {
           inputTokens,
           outputTokens: outputTokens.map((token) => ({
             ...token,
-            amount: (parseFloat(token.amount) * 0.98).toFixed(2),
+            amount: (parseFloat(token.amount) * offset).toFixed(4),
           })),
           inputValueUSD: totalInputValue.toFixed(2),
-          outputValueUSD: (totalInputValue * 0.98).toFixed(2),
+          outputValueUSD: (totalInputValue * offset).toFixed(2),
         },
       ]);
     } catch (error) {
@@ -158,7 +172,6 @@ export default function QuotesCard() {
     setQuotes,
     generateStateHash,
   ]);
-  
 
   const handleSelectQuote = (quote: Quote) => {
     quote.outputTokens.forEach((token) => {
@@ -186,13 +199,19 @@ export default function QuotesCard() {
   );
 
   return (
-    <Card.Root width="400px" variant="outline" size="sm" maxH={"70vh"}>
+    <Card.Root
+      width="400px"
+      maxW={"90vw"}
+      variant="outline"
+      size="sm"
+      maxH={"70vh"}
+    >
       <Card.Header py={4}>
         <Flex justify="space-between" align="center">
           <Heading>Select a Route</Heading>
           <IconButton
             aria-label="Refresh Quotes"
-            size="xs"
+            size="sm"
             onClick={generateQuotes}
             disabled={isFetching || hasZeroAmountInput}
           >
@@ -217,17 +236,30 @@ export default function QuotesCard() {
                 >
                   <Card.Body py={2}>
                     <Flex justify="space-between" align="center">
-                      <Text fontSize="xs" fontWeight="bold">
+                      <Text fontSize="sm" fontWeight="bold">
                         {quote.solver}
                       </Text>
                       <Box>
-                        {idx === 0 && (
+                        {idx === 0 ? (
                           <Badge
                             bg="teal.600"
                             fontWeight={"bold"}
                             color={"#fff"}
                           >
                             Best
+                          </Badge>
+                        ) : (
+                          <Badge
+                            bg="red.600"
+                            fontWeight={"bold"}
+                            color={"#fff"}
+                          >
+                            {`${(
+                              ((parseFloat(quotes[1].outputValueUSD) -
+                                parseFloat(quotes[0].outputValueUSD)) /
+                                parseFloat(quotes[0].outputValueUSD)) *
+                              100
+                            ).toFixed(2)}%`}
                           </Badge>
                         )}
                       </Box>
@@ -237,21 +269,21 @@ export default function QuotesCard() {
                   <Card.Body>
                     <HStack justify="space-between" align="flex-start">
                       <Box>
-                        <Text fontSize="xs" fontWeight="bold" mb={1}>
+                        <Text fontSize="sm" fontWeight="bold" mb={1}>
                           Input Tokens
                         </Text>
                         {quote.inputTokens.map((token, tokenIdx) => (
-                          <Text key={tokenIdx} fontSize="xs">
+                          <Text key={tokenIdx} fontSize="sm">
                             {token.amount} {token.symbol}
                           </Text>
                         ))}
                       </Box>
                       <Box>
-                        <Text fontSize="xs" fontWeight="bold" mb={1}>
+                        <Text fontSize="sm" fontWeight="bold" mb={1}>
                           Output Tokens
                         </Text>
                         {quote.outputTokens.map((token, tokenIdx) => (
-                          <Text key={tokenIdx} fontSize="xs">
+                          <Text key={tokenIdx} fontSize="sm">
                             {token.amount} {token.symbol}
                           </Text>
                         ))}
@@ -262,16 +294,16 @@ export default function QuotesCard() {
                   <Card.Body py={2}>
                     <HStack justify="space-between" align="flex-start">
                       <Box>
-                        <Text fontSize="xs" fontWeight="bold">
+                        <Text fontSize="sm" fontWeight="bold">
                           Input Value
                         </Text>
-                        <Text fontSize="xs">${quote.inputValueUSD}</Text>
+                        <Text fontSize="sm">${quote.inputValueUSD}</Text>
                       </Box>
                       <Box>
-                        <Text fontSize="xs" fontWeight="bold">
+                        <Text fontSize="sm" fontWeight="bold">
                           Output Value
                         </Text>
-                        <Text fontSize="xs">${quote.outputValueUSD}</Text>
+                        <Text fontSize="sm">${quote.outputValueUSD}</Text>
                       </Box>
                     </HStack>
                   </Card.Body>

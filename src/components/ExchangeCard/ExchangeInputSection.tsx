@@ -43,7 +43,7 @@ export default function ExchangeInputSection({
   return (
     <>
       <Card.Root variant={"outline"}>
-        <Card.Title fontSize={"xs"} p={3} pb={0}>
+        <Card.Title fontSize={"sm"} p={3} pb={0}>
           <Box
             display={"flex"}
             alignItems={"center"}
@@ -94,7 +94,7 @@ export default function ExchangeInputSection({
                 <Group attached>
                   <Button
                     w={"80px"}
-                    size={"xs"}
+                    size={"sm"}
                     fontWeight={"bold"}
                     borderLeftRadius={"xl"}
                     display={"flex"}
@@ -111,7 +111,7 @@ export default function ExchangeInputSection({
                   {idx > 0 || swapData.input.tokens.length > 1 ? (
                     <IconButton
                       aria-label="Remove Token"
-                      size={"xs"}
+                      size={"sm"}
                       p={0}
                       fontWeight={"bold"}
                       borderLeftColor={"#eee"}
@@ -123,7 +123,7 @@ export default function ExchangeInputSection({
                   ) : (
                     <IconButton
                       aria-label="Change Token"
-                      size={"xs"}
+                      size={"sm"}
                       p={0}
                       fontWeight={"bold"}
                       borderLeftColor={"#eee"}
@@ -142,7 +142,7 @@ export default function ExchangeInputSection({
             <Button
               w={"100%"}
               mt={2}
-              size={"xs"}
+              size={"sm"}
               variant={"ghost"}
               onClick={() => setActiveCard(ActiveCard.IOInput)}
             >

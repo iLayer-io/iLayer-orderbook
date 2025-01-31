@@ -132,7 +132,13 @@ export default function ExchangeCard({ setActiveCard }: ExchangeCardProps) {
     swapData.input.tokens.length === 1 && swapData.output.tokens.length === 1;
 
   return (
-    <Card.Root width="400px" variant={"outline"} size={"sm"} maxH={"70vh"}>
+    <Card.Root
+      width="400px"
+      maxW={"90vw"}
+      variant={"outline"}
+      size={"sm"}
+      maxH={"70vh"}
+    >
       <ExchangeHeader setActiveCard={setActiveCard} />
       <Separator />
       <Card.Body gap="2" overflowY={"scroll"}>
@@ -146,7 +152,7 @@ export default function ExchangeCard({ setActiveCard }: ExchangeCardProps) {
         <Box position="relative" zIndex={1000}>
           <Float placement="middle-center">
             <IconButton
-              size={"xs"}
+              size={"sm"}
               border={"3px solid transparent"}
               onClick={() => invertSwap()}
             >

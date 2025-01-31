@@ -32,10 +32,10 @@ export default function SettingsCard({ setActiveCard }: SettingsCardProps) {
     <Card.Root width="400px" variant="outline" size="sm">
       <Card.Header py={4}>
         <Flex flexDirection="row">
-          <Heading size="md">Settings</Heading>
+          <Heading>Settings</Heading>
           <IconButton
             aria-label="Close"
-            size={"xs"}
+            size={"sm"}
             ml={"auto"}
             onClick={() => setActiveCard(ActiveCard.Exchange)}
           >
@@ -45,19 +45,19 @@ export default function SettingsCard({ setActiveCard }: SettingsCardProps) {
       </Card.Header>
       <Separator />
       <Card.Body gap={2}>
-        <Text fontSize="xs" fontWeight="bold">
+        <Text fontSize="sm" fontWeight="bold">
           Swap Deadline (minutes)
         </Text>
-        <NumberInputRoot min={0} size="xs">
+        <NumberInputRoot min={0} size="sm">
           <NumberInputField placeholder="30" />
         </NumberInputRoot>
 
-        <Text fontSize="xs" fontWeight="bold">
+        <Text fontSize="sm" fontWeight="bold">
           Custom Recipient
         </Text>
-        <Input size="xs" placeholder="0x..." />
+        <Input size="sm" placeholder="0x..." />
 
-        <Text fontSize="xs" fontWeight="bold">
+        <Text fontSize="sm" fontWeight="bold">
           Enable Hook
         </Text>
         <Switch
@@ -73,22 +73,22 @@ export default function SettingsCard({ setActiveCard }: SettingsCardProps) {
               Call any smart contract with your own parameters
             </Text>
 
-            <Text fontSize="xs" fontWeight="bold">
+            <Text fontSize="sm" fontWeight="bold">
               Target
             </Text>
-            <Input size="xs" placeholder="Contract address (0x...)" />
+            <Input size="sm" placeholder="Contract address (0x...)" />
 
-            <Text fontSize="xs" fontWeight="bold">
+            <Text fontSize="sm" fontWeight="bold">
               Gas Limit
             </Text>
-            <NumberInputRoot min={0} size="xs">
+            <NumberInputRoot min={0} size="sm">
               <NumberInputField placeholder="21000" />
             </NumberInputRoot>
 
-            <Text fontSize="xs" fontWeight="bold">
+            <Text fontSize="sm" fontWeight="bold">
               Calldata
             </Text>
-            <Textarea size="xs" placeholder="Enter calldata here..." />
+            <Textarea size="sm" placeholder="Enter calldata here..." />
           </>
         )}
       </Card.Body>

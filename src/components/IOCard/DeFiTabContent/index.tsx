@@ -45,7 +45,7 @@ const DeFiTabContent = ({ direction }: { direction: Direction }) => {
     return (
       <Card.Body gap={2}>
         <Button
-          size="xs"
+          size="sm"
           variant="surface"
           onClick={() => setSelectedProtocol(null)}
         >
@@ -53,7 +53,7 @@ const DeFiTabContent = ({ direction }: { direction: Direction }) => {
             <BsArrowLeftShort /> Back to Protocols <Box />
           </Flex>
         </Button>
-        <Card.Title fontSize={"xs"}>
+        <Card.Title fontSize={"sm"} mt={2}>
           Select Tokens from {selectedProtocol}
         </Card.Title>
         {shouldUseSingleToken ? (
@@ -75,7 +75,7 @@ const DeFiTabContent = ({ direction }: { direction: Direction }) => {
 
   return (
     <Card.Body gap={2}>
-      <Card.Title fontSize={"xs"}>
+      <Card.Title fontSize={"sm"}>
         {defiProtocols.length === 0 ? (
           <Highlight query={selectedNetwork} styles={{ color: "teal.600" }}>
             {`iLayer One Click DeFi is coming soon™ to ${selectedNetwork}`}
@@ -88,7 +88,7 @@ const DeFiTabContent = ({ direction }: { direction: Direction }) => {
         <Button
           key={idx}
           w={"100%"}
-          size={"xs"}
+          size={"sm"}
           variant={"surface"}
           onClick={() => setSelectedProtocol(protocol.name)}
         >

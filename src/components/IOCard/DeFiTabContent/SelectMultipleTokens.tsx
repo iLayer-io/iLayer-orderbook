@@ -25,8 +25,7 @@ const SelectMultipleTokens = ({
   };
 
   return (
-    <Card.Body gap={2}>
-      <Card.Title fontSize={"xs"}>Select at least one token</Card.Title>
+    <Card.Body gap={2} pt={0}>
       {tokens.map((token) => (
         <Checkbox
           key={token.name}
@@ -43,7 +42,7 @@ const SelectMultipleTokens = ({
               justifyContent={"center"}
               alignItems={"center"}
             >
-              <Avatar.Root borderless={true} size={"xs"}>
+              <Avatar.Root borderless={true} size={"sm"}>
                 <Avatar.Image src={`tokens/${token.icon}`} />
               </Avatar.Root>
             </GridItem>

@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Card,
   Flex,
@@ -16,6 +17,7 @@ import { useState, useEffect } from "react";
 
 import TokensTabContent from "./TokensTabContent";
 import DeFiTabContent from "./DeFiTabContent";
+import { MdOutlineClose } from "react-icons/md";
 
 interface IOCardProps {
   direction: Direction;
@@ -43,31 +45,42 @@ export default function IOCard({ direction, setActiveCard }: IOCardProps) {
   return (
     <Card.Root width="400px" size={"sm"}>
       <Card.Body gap="2">
-        <Flex flexFlow={"row"}>
-          {config?.map((network, idx) => {
-            const isSelected =
-              (direction === Direction.Input &&
-                swapData?.input.network === network.name) ||
-              (direction === Direction.Output &&
-                swapData?.output.network === network.name);
-            return (
-              <IconButton
-                key={idx}
-                aria-label={network.name}
-                size={"xs"}
-                mr={2}
-                variant={isSelected ? "solid" : "surface"}
-                onClick={() => handleNetworkChange(network.name)}
-              >
-                <Image
-                  src={`networks/${network.icon}`}
-                  alt={network.name}
-                  fit={"contain"}
-                  h={6}
-                />
-              </IconButton>
-            );
-          })}
+        <Flex flexFlow={"row"} justify={"space-between"}>
+          <Box>
+            {config?.map((network, idx) => {
+              const isSelected =
+                (direction === Direction.Input &&
+                  swapData?.input.network === network.name) ||
+                (direction === Direction.Output &&
+                  swapData?.output.network === network.name);
+              return (
+                <IconButton
+                  key={idx}
+                  aria-label={network.name}
+                  size={"sm"}
+                  mr={2}
+                  variant={isSelected ? "solid" : "surface"}
+                  onClick={() => handleNetworkChange(network.name)}
+                >
+                  <Image
+                    src={`networks/${network.icon}`}
+                    alt={network.name}
+                    fit={"contain"}
+                    h={6}
+                  />
+                </IconButton>
+              );
+            })}
+          </Box>
+          <Box>
+            <IconButton
+              aria-label="close"
+              size={"sm"}
+              onClick={() => setActiveCard(ActiveCard.Exchange)}
+            >
+              <MdOutlineClose />
+            </IconButton>
+          </Box>
         </Flex>
       </Card.Body>
       <Separator />
@@ -102,7 +115,7 @@ export default function IOCard({ direction, setActiveCard }: IOCardProps) {
       <Card.Footer justifyContent="center" p={4}>
         <Button
           w={"100%"}
-          size={"xs"}
+          size={"sm"}
           fontWeight={"bold"}
           onClick={() => setActiveCard(ActiveCard.Exchange)}
         >
