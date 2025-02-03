@@ -35,7 +35,8 @@ export default function NavBar() {
           <ColorModeButton
             size={"lg"}
             rounded={"lg"}
-            ml={4}
+            ml={3}
+            pl={3}
             my={3}
             display={{ base: "none", lg: "block" }}
           />

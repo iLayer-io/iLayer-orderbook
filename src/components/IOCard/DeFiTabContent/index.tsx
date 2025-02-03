@@ -17,7 +17,8 @@ import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 
 const DeFiTabContent = ({ direction }: { direction: Direction }) => {
   const { config } = useConfig();
-  const { swapData, updateInputTokens, updateOutputTokens } = useSwapContext();
+  const { swapData, updateInputTokens, updateOutputTokens, advancedMode } =
+    useSwapContext();
   const [selectedProtocol, setSelectedProtocol] = useState<string | null>(null);
 
   const selectedNetwork =
@@ -41,9 +42,10 @@ const DeFiTabContent = ({ direction }: { direction: Direction }) => {
   }, [selectedNetwork]);
 
   const shouldUseSingleToken =
-    direction === Direction.Input
+    !advancedMode ||
+    (direction === Direction.Input
       ? swapData.output.tokens.length > 1
-      : swapData.input.tokens.length > 1;
+      : swapData.input.tokens.length > 1);
 
   if (selectedProtocol) {
     const protocolTokens =

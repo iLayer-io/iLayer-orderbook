@@ -7,7 +7,8 @@ import { useEffect, useMemo } from "react";
 
 const TokensTabContent = ({ direction }: { direction: Direction }) => {
   const { config } = useConfig();
-  const { swapData, updateInputTokens, updateOutputTokens } = useSwapContext();
+  const { swapData, updateInputTokens, updateOutputTokens, advancedMode } =
+    useSwapContext();
 
   const selectedNetwork =
     direction === Direction.Input
@@ -19,12 +20,11 @@ const TokensTabContent = ({ direction }: { direction: Direction }) => {
       ? swapData.input.tokens.map((t) => t.token)
       : swapData.output.tokens.map((t) => t.token);
 
-    const tokens = useMemo(() => {
-      return (
-        config?.find((network) => network.name === selectedNetwork)?.tokens ||
-        []
-      );
-    }, [config, selectedNetwork]);
+  const tokens = useMemo(() => {
+    return (
+      config?.find((network) => network.name === selectedNetwork)?.tokens || []
+    );
+  }, [config, selectedNetwork]);
 
   const updateTokens =
     direction === Direction.Input ? updateInputTokens : updateOutputTokens;
@@ -36,9 +36,10 @@ const TokensTabContent = ({ direction }: { direction: Direction }) => {
   }, [tokens, selectedTokens, updateTokens]);
 
   const shouldUseSingleToken =
-    direction === Direction.Input
+    !advancedMode ||
+    (direction === Direction.Input
       ? swapData.output.tokens.length > 1
-      : swapData.input.tokens.length > 1;
+      : swapData.input.tokens.length > 1);
 
   if (shouldUseSingleToken) {
     return (

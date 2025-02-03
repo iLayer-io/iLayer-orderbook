@@ -41,7 +41,7 @@ export default function ExchangeOutputSection({
   showAddTokenBoth,
   error,
 }: ExchangeOutputSectionProps) {
-  const { swapData } = useSwapContext();
+  const { swapData, advancedMode } = useSwapContext();
   const { getNetworkIcon } = useConfig();
 
   return (
@@ -55,7 +55,6 @@ export default function ExchangeOutputSection({
             cursor="pointer"
           >
             <Text mr={1}>To</Text>
-
             <Avatar.Root mr={1} h={4} w={4}>
               <Avatar.Image
                 src={`networks/${getNetworkIcon(swapData.output.network)}`}
@@ -71,15 +70,15 @@ export default function ExchangeOutputSection({
         </Card.Title>
         <Card.Body p={3} pr={0} mx={2}>
           {swapData.output.tokens.map((token, idx) => (
-            <SimpleGrid columns={6} key={`${token.token.address}-${idx}`}>
-              <GridItem colSpan={swapData.output.tokens.length > 1 ? 3 : 4}>
+            <SimpleGrid columns={10} key={`${token.token.address}-${idx}`}>
+              <GridItem colSpan={swapData.output.tokens.length > 1 ? 4 : 6}>
                 <NumberInputRoot
                   w={"100%"}
                   size={"lg"}
                   min={0}
                   fontWeight={"bold"}
                   variant={"ilayer"}
-                  readOnly
+                  disabled
                 >
                   <NumberInputField
                     placeholder="0"
@@ -88,7 +87,7 @@ export default function ExchangeOutputSection({
                 </NumberInputRoot>
               </GridItem>
               {swapData.output.tokens.length > 1 && (
-                <GridItem colSpan={1}>
+                <GridItem colSpan={2}>
                   <Flex alignItems={"center"}>
                     <Text mr={1} fontWeight={"bold"}>
                       %
@@ -112,7 +111,7 @@ export default function ExchangeOutputSection({
                 </GridItem>
               )}
               <GridItem
-                colSpan={2}
+                colSpan={4}
                 display={"flex"}
                 justifyContent={"flex-end"}
                 alignItems={"center"}
@@ -164,7 +163,7 @@ export default function ExchangeOutputSection({
             </SimpleGrid>
           ))}
 
-          {showAddTokenOutput || showAddTokenBoth ? (
+          {advancedMode && (showAddTokenOutput || showAddTokenBoth) ? (
             <Button
               w={"100%"}
               mt={2}

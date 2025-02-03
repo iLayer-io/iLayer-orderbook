@@ -37,7 +37,7 @@ export default function ExchangeInputSection({
   showAddTokenInput,
   showAddTokenBoth,
 }: ExchangeInputSectionProps) {
-  const { swapData } = useSwapContext();
+  const { swapData, advancedMode } = useSwapContext();
   const { getNetworkIcon } = useConfig();
 
   return (
@@ -51,7 +51,6 @@ export default function ExchangeInputSection({
             cursor="pointer"
           >
             <Text mr={1}>From</Text>
-
             <Avatar.Root mr={1} h={4} w={4}>
               <Avatar.Image
                 src={`networks/${getNetworkIcon(swapData.input.network)}`}
@@ -67,8 +66,8 @@ export default function ExchangeInputSection({
         </Card.Title>
         <Card.Body p={3} pr={0} mx={2}>
           {swapData.input.tokens.map((token, idx) => (
-            <SimpleGrid columns={6} key={`${token.token.address}-${idx}`}>
-              <GridItem colSpan={4}>
+            <SimpleGrid columns={10} key={`${token.token.address}-${idx}`}>
+              <GridItem colSpan={6}>
                 <NumberInputRoot
                   w={"100%"}
                   size={"lg"}
@@ -86,7 +85,7 @@ export default function ExchangeInputSection({
                 </NumberInputRoot>
               </GridItem>
               <GridItem
-                colSpan={2}
+                colSpan={4}
                 display={"flex"}
                 justifyContent={"flex-end"}
                 alignItems={"center"}
@@ -138,7 +137,7 @@ export default function ExchangeInputSection({
             </SimpleGrid>
           ))}
 
-          {showAddTokenInput || showAddTokenBoth ? (
+          {advancedMode && (showAddTokenInput || showAddTokenBoth) ? (
             <Button
               w={"100%"}
               mt={2}
@@ -154,4 +153,3 @@ export default function ExchangeInputSection({
     </>
   );
 }
-

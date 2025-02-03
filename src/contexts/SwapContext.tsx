@@ -33,6 +33,8 @@ interface SwapContextProps {
   updateOutputAmount: (token: TokenOrDefiToken, amount: number) => void;
   updateOutputPercentages: (percentages: number[]) => void;
   invertSwap: () => void;
+  advancedMode: boolean;
+  toggleAdvancedMode: () => void;
 }
 
 const SwapContext = createContext<SwapContextProps | undefined>(undefined);
@@ -103,6 +105,11 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
   const [swapData, setSwapData] = useState<SwapState | null>(null);
   const { switchChain } = useSwitchChain();
 
+  const [advancedMode, setAdvancedMode] = useState<boolean>(false);
+  const toggleAdvancedMode = useCallback(() => {
+    setAdvancedMode((prev) => !prev);
+  }, []);
+
   useEffect(() => {
     if (config && config.length >= 2) {
       try {
@@ -124,6 +131,27 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
       }
     }
   }, [config]);
+
+  useEffect(() => {
+    setSwapData((current) => {
+      if (!current || !config) return current;
+      const inputNetwork = current.input.network;
+      const outputNetwork = current.output.network;
+      const inputToken = getFirstToken(inputNetwork, config);
+      const outputToken = getFirstToken(outputNetwork, config);
+      return {
+        input: {
+          network: inputNetwork,
+          tokens: inputToken ? [{ token: inputToken, amount: 0 }] : [],
+        },
+        output: {
+          network: outputNetwork,
+          tokens: outputToken ? [{ token: outputToken, amount: 0 }] : [],
+        },
+        outputPercentages: calculateDefaultPercentages(outputToken ? 1 : 0),
+      };
+    });
+  }, [advancedMode, config]);
 
   const inputNetwork = swapData?.input.network;
 
@@ -285,6 +313,8 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
         updateOutputAmount,
         updateOutputPercentages,
         invertSwap,
+        advancedMode,
+        toggleAdvancedMode,
       }}
     >
       {children}

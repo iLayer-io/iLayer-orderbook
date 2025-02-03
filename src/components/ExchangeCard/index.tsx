@@ -1,4 +1,11 @@
-import { Box, Card, Float, IconButton, Separator } from "@chakra-ui/react";
+import {
+  Box,
+  Card,
+  Float,
+  Icon,
+  IconButton,
+  Separator,
+} from "@chakra-ui/react";
 import { useSwapContext } from "@/contexts/SwapContext";
 
 import { ActiveCard, Direction } from "@/types";
@@ -8,6 +15,8 @@ import ExchangeOutputSection from "./ExchangeOutputSection";
 import ExchangeInputSection from "./ExchangeInputSection";
 import ExchangeHeader from "./ExchangeHeader";
 import { GoArrowDown } from "react-icons/go";
+import { Switch } from "@/components/ui/switch";
+import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 
 interface ExchangeCardProps {
   setActiveCard: (card: ActiveCard) => void;
@@ -22,6 +31,8 @@ export default function ExchangeCard({ setActiveCard }: ExchangeCardProps) {
     updateOutputPercentages,
     updateOutputAmount,
     invertSwap,
+    advancedMode,
+    toggleAdvancedMode,
   } = useSwapContext();
 
   const calculateDefaultPercentages = (count: number): number[] => {
@@ -142,6 +153,25 @@ export default function ExchangeCard({ setActiveCard }: ExchangeCardProps) {
       <ExchangeHeader setActiveCard={setActiveCard} />
       <Separator />
       <Card.Body gap="2" overflowY={"scroll"}>
+        <Switch
+          mb={2}
+          trackLabel={{
+            on: (
+              <Icon color="green">
+                <IoMdCheckmark />
+              </Icon>
+            ),
+            off: (
+              <Icon color="red">
+                <IoMdClose />
+              </Icon>
+            ),
+          }}
+          checked={advancedMode}
+          onChange={toggleAdvancedMode}
+        >
+          Advanced Mode
+        </Switch>
         <ExchangeInputSection
           setActiveCard={setActiveCard}
           handleInputChange={handleInputChange}

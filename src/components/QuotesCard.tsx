@@ -133,7 +133,7 @@ export default function QuotesCard() {
         };
       });
 
-      const offset = getRandomBetween(0.98, 0.9, 18);
+      const offset = getRandomBetween(0.9, 0.975, 18);
 
       setQuotes([
         {
