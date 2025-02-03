@@ -10,10 +10,8 @@ import React, {
 } from "react";
 import { useConfig } from "@/contexts/ConfigContext";
 import { Config, TokenOrDefiToken, TokenWithAmount } from "@/types";
-// Importa il hook per il cambio chain da wagmi
 import { useSwitchChain } from "wagmi";
 
-// Definisce la struttura dei dati per lo swap
 export interface SwapData {
   network: string;
   tokens: TokenWithAmount[];
@@ -43,10 +41,6 @@ interface SwapProviderProps {
   children: ReactNode;
 }
 
-/**
- * Unisce la lista di token esistente con una nuova lista,
- * mantenendo gli importi già impostati (se esistenti).
- */
 const mergeTokens = (
   currentTokens: TokenWithAmount[],
   newTokens: TokenOrDefiToken[]
@@ -60,9 +54,6 @@ const mergeTokens = (
   }));
 };
 
-/**
- * Calcola le percentuali di default date una quantità di token.
- */
 const calculateDefaultPercentages = (count: number): number[] => {
   if (count === 0) return [];
   const base = Math.floor(100 / count);
@@ -72,9 +63,6 @@ const calculateDefaultPercentages = (count: number): number[] => {
     .map((value, idx) => (idx === count - 1 ? value + remainder : value));
 };
 
-/**
- * Ritorna il primo token disponibile per la rete specificata.
- */
 const getFirstToken = (
   networkName: string,
   config: Config
@@ -87,16 +75,6 @@ const getFirstToken = (
   return network.tokens[0];
 };
 
-/**
- * Mappa il nome della rete al chain ID richiesto dal wallet.
- * La funzione è case-insensitive e supporta:
- * - mainnet/ethereum/ethereum mainnet → 1
- * - polygon → 137
- * - optimism → 10
- * - arbitrum → 42161
- * - base → 8453
- * - avalanche → 43114
- */
 const getChainIdByNetwork = (network: string): number | undefined => {
   const net = network.toLowerCase();
   switch (net) {
@@ -123,17 +101,13 @@ const getChainIdByNetwork = (network: string): number | undefined => {
 export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
   const { config, loading, error } = useConfig();
   const [swapData, setSwapData] = useState<SwapState | null>(null);
-
-  // Inizializza il hook per cambiare chain
   const { switchChain } = useSwitchChain();
 
-  // Quando il config è disponibile, inizializza lo stato swapData
   useEffect(() => {
     if (config && config.length >= 2) {
       try {
         const inputToken = getFirstToken(config[0].name, config);
         const outputToken = getFirstToken(config[1].name, config);
-
         setSwapData({
           input: {
             network: config[0].name,
@@ -151,18 +125,19 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
     }
   }, [config]);
 
-  // Ogni volta che la rete d'input cambia, tenta di cambiare chain tramite il wallet
+  const inputNetwork = swapData?.input.network;
+
   useEffect(() => {
-    if (swapData && swapData.input.network) {
-      const chainId = getChainIdByNetwork(swapData.input.network);
+    if (inputNetwork) {
+      const chainId = getChainIdByNetwork(inputNetwork);
       if (chainId && switchChain) {
         console.log(
-          `Switching chain to chainId ${chainId} for network ${swapData.input.network}`
+          `Switching chain to chainId ${chainId} for network ${inputNetwork}`
         );
         switchChain({ chainId });
       }
     }
-  }, [swapData?.input.network, switchChain]);
+  }, [inputNetwork, switchChain]);
 
   const updateOutputPercentages = (percentages: number[]) => {
     const total = percentages.reduce((sum, p) => sum + p, 0);
@@ -178,9 +153,6 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
     });
   };
 
-  /**
-   * Aggiorna la rete di input e (tramite l'useEffect) innesca il cambio di chain.
-   */
   const updateInputNetwork = (network: string) => {
     if (!config) return;
     const firstToken = getFirstToken(network, config);
