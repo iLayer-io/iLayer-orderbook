@@ -274,7 +274,7 @@ export default function QuotesCard() {
                         </Text>
                         {quote.inputTokens.map((token, tokenIdx) => (
                           <Text key={tokenIdx} fontSize="sm">
-                            {token.amount} {token.symbol}
+                            {token.amount} <b>{token.symbol}</b>
                           </Text>
                         ))}
                       </Box>
@@ -284,7 +284,7 @@ export default function QuotesCard() {
                         </Text>
                         {quote.outputTokens.map((token, tokenIdx) => (
                           <Text key={tokenIdx} fontSize="sm">
-                            {token.amount} {token.symbol}
+                            {token.amount} <b>{token.symbol}</b>
                           </Text>
                         ))}
                       </Box>

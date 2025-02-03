@@ -1,5 +1,5 @@
 import { Card, Grid, GridItem, Avatar, Text } from "@chakra-ui/react";
-import { TokenOrDefiToken } from "@/types";
+import { DefiToken, TokenOrDefiToken } from "@/types";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface SelectMultipleTokensProps {
@@ -47,15 +47,13 @@ const SelectMultipleTokens = ({
               </Avatar.Root>
             </GridItem>
             <GridItem colSpan={6}>
-              <Text textStyle="sm">{token.name}</Text>
-              <Text textStyle="xs">{token.symbol}</Text>
+              <Text textStyle="sm" fontWeight={"bold"}>
+                {token.symbol}
+              </Text>
+              <Text textStyle="xs">{token.name}</Text>
             </GridItem>
             <GridItem colSpan={1}>
-              <Text textStyle="sm">
-                {token.address
-                  ? `${token.address.slice(0, 5)}...${token.address.slice(-3)}`
-                  : "N/A"}
-              </Text>
+              <Text textStyle="sm">{(token as DefiToken).yield}%</Text>
             </GridItem>
           </Grid>
         </Checkbox>

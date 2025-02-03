@@ -1,11 +1,19 @@
 import { useConfig } from "@/contexts/ConfigContext";
 import { useSwapContext } from "@/contexts/SwapContext";
 import { Direction } from "@/types";
-import { Card, Button, Flex, Box, Highlight } from "@chakra-ui/react";
+import {
+  Card,
+  Button,
+  Flex,
+  Box,
+  Highlight,
+  Avatar,
+  defineStyle,
+} from "@chakra-ui/react";
 import SelectSingleToken from "./SelectSingleToken";
 import SelectMultipleTokens from "./SelectMultipleTokens";
 import { useState, useEffect } from "react";
-import { BsArrowLeftShort, BsArrowRightShort } from "react-icons/bs";
+import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 
 const DeFiTabContent = ({ direction }: { direction: Direction }) => {
   const { config } = useConfig();
@@ -49,8 +57,13 @@ const DeFiTabContent = ({ direction }: { direction: Direction }) => {
           variant="surface"
           onClick={() => setSelectedProtocol(null)}
         >
-          <Flex w={"100%"} justify={"space-between"}>
-            <BsArrowLeftShort /> Back to Protocols <Box />
+          <Flex
+            w={"100%"}
+            justify={"space-between"}
+            alignItems={"center"}
+            fontWeight={"bold"}
+          >
+            <BsArrowLeft /> Back to Protocols <Box />
           </Flex>
         </Button>
         <Card.Title fontSize={"sm"} mt={2}>
@@ -73,6 +86,12 @@ const DeFiTabContent = ({ direction }: { direction: Direction }) => {
     );
   }
 
+  const ringCss = defineStyle({
+    outlineWidth: "2px",
+    outlineColor: "colorPalette.300",
+    outlineStyle: "solid",
+  });
+
   return (
     <Card.Body gap={2}>
       <Card.Title fontSize={"sm"}>
@@ -92,8 +111,11 @@ const DeFiTabContent = ({ direction }: { direction: Direction }) => {
           variant={"surface"}
           onClick={() => setSelectedProtocol(protocol.name)}
         >
-          <Flex justify={"space-between"} w={"100%"}>
-            <Box /> {protocol.name} <BsArrowRightShort />
+          <Flex justify={"space-between"} alignItems={"center"} w={"100%"}>
+            <Avatar.Root h={6} w={6} colorPalette="grey" css={ringCss}>
+              <Avatar.Image src={`protocols/${protocol.icon}`} />
+            </Avatar.Root>
+            <b>{protocol.name}</b> <BsArrowRight />
           </Flex>
         </Button>
       ))}

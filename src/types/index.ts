@@ -26,6 +26,7 @@ export interface TokenWithAmount {
 
 export type Defi = {
   name: string;
+  icon: string;
   tokens: DefiToken[];
 };
 

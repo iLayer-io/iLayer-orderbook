@@ -48,8 +48,10 @@ const SelectMultipleTokens = ({
               </Avatar.Root>
             </GridItem>
             <GridItem colSpan={6}>
-              <Text textStyle="sm">{token.name}</Text>
-              <Text textStyle="xs">{token.symbol}</Text>
+              <Text textStyle="sm" fontWeight={"bold"}>
+                {token.symbol}
+              </Text>
+              <Text textStyle="xs">{token.name}</Text>
             </GridItem>
             <GridItem colSpan={1}>
               <Text textStyle="sm">

@@ -91,11 +91,11 @@ export default function IOCard({ direction, setActiveCard }: IOCardProps) {
         fitted
       >
         <Tabs.List>
-          <Tabs.Trigger value="tokens">
+          <Tabs.Trigger value="tokens" fontWeight={"bold"}>
             <GiTwoCoins />
             Tokens
           </Tabs.Trigger>
-          <Tabs.Trigger value="defi">
+          <Tabs.Trigger value="defi" fontWeight={"bold"}>
             <GiPieChart />
             DeFi
           </Tabs.Trigger>

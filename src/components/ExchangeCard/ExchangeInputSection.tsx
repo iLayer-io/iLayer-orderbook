@@ -93,7 +93,7 @@ export default function ExchangeInputSection({
               >
                 <Group attached>
                   <Button
-                    w={"80px"}
+                    w={"90px"}
                     size={"sm"}
                     fontWeight={"bold"}
                     borderLeftRadius={"xl"}
