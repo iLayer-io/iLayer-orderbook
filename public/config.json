@@ -14,14 +14,6 @@
         "coingeckoId": "ethereum"
       },
       {
-        "name": "Wrapped Ethereum",
-        "symbol": "WETH",
-        "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-        "decimals": 18,
-        "icon": "weth.webp",
-        "coingeckoId": "weth"
-      },
-      {
         "name": "Tether USD",
         "symbol": "USDT",
         "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7",
@@ -177,19 +169,11 @@
     ]
   },
   {
-    "name": "Sui",
-    "nativeToken": "SUI",
+    "name": "Base",
+    "nativeToken": "ETH",
     "decimals": 18,
-    "icon": "sui.png",
+    "icon": "base.png",
     "tokens": [
-      {
-        "name": "Sui",
-        "symbol": "SUI",
-        "address": "0x0000000000000000000000000000000000000001",
-        "decimals": 18,
-        "icon": "sui.webp",
-        "coingeckoId": "sui"
-      },
       {
         "name": "Ethereum",
         "symbol": "ETH",
@@ -217,18 +201,58 @@
     ]
   },
   {
-    "name": "Aptos",
-    "nativeToken": "APT",
+    "name": "Polygon",
+    "nativeToken": "POL",
     "decimals": 18,
-    "icon": "aptos.png",
+    "icon": "polygon.png",
     "tokens": [
       {
-        "name": "Aptos",
-        "symbol": "APT",
+        "name": "Polygon",
+        "symbol": "POL",
         "address": "0x0000000000000000000000000000000000000005",
         "decimals": 18,
-        "icon": "apt.webp",
-        "coingeckoId": "aptos"
+        "icon": "pol.webp",
+        "coingeckoId": "polygon-ecosystem-token"
+      },
+      {
+        "name": "Ethereum",
+        "symbol": "ETH",
+        "address": "0x0000000000000000000000000000000000000006",
+        "decimals": 18,
+        "icon": "eth.webp",
+        "coingeckoId": "ethereum"
+      },
+      {
+        "name": "Tether USD",
+        "symbol": "USDT",
+        "address": "0x0000000000000000000000000000000000000007",
+        "decimals": 18,
+        "icon": "usdt.webp",
+        "coingeckoId": "tether"
+      },
+      {
+        "name": "USD Coin",
+        "symbol": "USDC",
+        "address": "0x0000000000000000000000000000000000000008",
+        "decimals": 18,
+        "icon": "usdc.webp",
+        "coingeckoId": "usd-coin"
+      }
+    ]
+  },
+  {
+    "name": "Avalanche",
+    "nativeToken": "AVAX",
+    "decimals": 18,
+    "icon": "avalanche.png",
+    "tokens": [
+      {
+        "name": "Avalanche",
+        "symbol": "AVAX",
+        "address": "0x0000000000000000000000000000000000000005",
+        "decimals": 18,
+        "icon": "avax.webp",
+        "coingeckoId": "avalanche-2"
       },
       {
         "name": "Ethereum",

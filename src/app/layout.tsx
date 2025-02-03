@@ -10,13 +10,20 @@ import "@rainbow-me/rainbowkit/styles.css";
 
 import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { WagmiProvider } from "wagmi";
-import { mainnet, arbitrum, optimism } from "wagmi/chains";
+import {
+  mainnet,
+  arbitrum,
+  optimism,
+  base,
+  polygon,
+  avalanche,
+} from "wagmi/chains";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 
 const config = getDefaultConfig({
   appName: "iLayer Swap",
   projectId: "ILAYER_SWAP",
-  chains: [mainnet, arbitrum, optimism],
+  chains: [mainnet, arbitrum, optimism, base, polygon, avalanche],
   ssr: false,
 });
 

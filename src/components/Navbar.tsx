@@ -27,7 +27,11 @@ export default function NavBar() {
           />
         </Flex>
         <Flex alignItems={"center"} justify={"center"} mt={{ base: 2, lg: 0 }}>
-          <ConnectButton chainStatus="icon" accountStatus="address" />
+          <ConnectButton
+            chainStatus="icon"
+            accountStatus="address"
+            showBalance={true}
+          />
           <ColorModeButton
             size={"lg"}
             rounded={"lg"}
