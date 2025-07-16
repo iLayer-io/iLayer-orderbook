@@ -247,8 +247,8 @@ const tokenToContractFormat = (
   return {
     tokenType: isNative ? TokenType.NATIVE : TokenType.ERC20,
     tokenAddress: addressAsBytes32,
-    amount: parsedAmount,
-    tokenId: BigInt(0)
+    tokenId: BigInt(0),
+    amount: parsedAmount
   };
 };
 
@@ -369,6 +369,7 @@ export const useOrderHub = () => {
     const order: Order = {
       user: pad(address, { size: 32 }),
       recipient: pad(address, { size: 32 }),
+      filler: pad('0x0', { size: 32 }),
       inputs,
       outputs,
       sourceChainId,
@@ -376,8 +377,7 @@ export const useOrderHub = () => {
       sponsored: false,
       primaryFillerDeadline,
       deadline,
-      filler: pad('0x0', { size: 32 }), // NULL_ADDRESS as bytes32
-      callRecipient: pad('0x0', { size: 32 }), // NULL_ADDRESS as bytes32
+      callRecipient: pad('0x0', { size: 32 }),
       callData: '0x',
       callValue: BigInt(0)
     };
