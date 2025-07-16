@@ -4,6 +4,11 @@
     "nativeToken": "ETH",
     "decimals": 18,
     "icon": "ethereum.png",
+    "contracts": {
+      "hub": null,
+      "spoke": null,
+      "router": null
+    },
     "tokens": [
       {
         "name": "Ethereum",
@@ -86,6 +91,11 @@
     "nativeToken": "ETH",
     "decimals": 18,
     "icon": "arbitrum.png",
+    "contracts": {
+      "hub": "0x98884F192fa911e44Df4a6a9E949e69896F65F5e",
+      "spoke": "0x57240D8e8cDCC5918c7F5e085874Af6d91b8Db00",
+      "router": "0xbe3Fb6Ce351f888D03eEbB17C0B3823eB455EF29"
+    },
     "tokens": [
       {
         "name": "Arbitrum",
@@ -176,6 +186,11 @@
     "nativeToken": "ETH",
     "decimals": 18,
     "icon": "optimism.png",
+    "contracts": {
+      "hub": null,
+      "spoke": null,
+      "router": null
+    },
     "tokens": [
       {
         "name": "Optimism",
@@ -216,6 +231,11 @@
     "nativeToken": "ETH",
     "decimals": 18,
     "icon": "base.png",
+    "contracts": {
+      "hub": "0x98884F192fa911e44Df4a6a9E949e69896F65F5e",
+      "spoke": "0x57240D8e8cDCC5918c7F5e085874Af6d91b8Db00",
+      "router": "0xbe3Fb6Ce351f888D03eEbB17C0B3823eB455EF29"
+    },
     "tokens": [
       {
         "name": "Ethereum",
@@ -298,6 +318,11 @@
     "nativeToken": "POL",
     "decimals": 18,
     "icon": "polygon.png",
+    "contracts": {
+      "hub": null,
+      "spoke": null,
+      "router": null
+    },
     "tokens": [
       {
         "name": "Polygon",
@@ -388,6 +413,11 @@
     "nativeToken": "AVAX",
     "decimals": 18,
     "icon": "avalanche.png",
+    "contracts": {
+      "hub": null,
+      "spoke": null,
+      "router": null
+    },
     "tokens": [
       {
         "name": "Avalanche",
