@@ -1,17 +1,25 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import {
   useWriteContract,
   useAccount,
   useChainId,
   usePublicClient,
-  useSignTypedData
+  useSignMessage,
+  useReadContract
 } from 'wagmi';
 import { Address, parseUnits, pad } from 'viem';
 import { orderHubAbi } from '@/abi/order-hub-abi';
 import { useSwapContext } from '@/contexts/SwapContext';
 import { useConfig } from '@/contexts/ConfigContext';
-import { TokenOrDefiToken } from '@/types';
+import {
+  prepareOrderRequest,
+  tokenToContractFormat,
+  TokenType,
+  type Token,
+  prepareSignatureData
+} from './signature';
 
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000' as const;
 
@@ -111,49 +119,12 @@ const getHubAddressByNetwork = (
   return network?.contracts?.hub || null;
 };
 
-// Enum per il tipo di token
-enum TokenType {
-  ERC20 = 0,
-  ERC721 = 1,
-  ERC1155 = 2,
-  NATIVE = 3
-}
-
 // Enum per il bridge selector
 enum BridgeSelector {
   NONE = 0,
   WORMHOLE = 1,
   CCTP = 2,
   HYPERLANE = 3
-}
-
-interface Token {
-  tokenType: number;
-  tokenAddress: string; // bytes32 in contract
-  tokenId: bigint;
-  amount: bigint;
-}
-
-interface Order {
-  user: string; // bytes32 in contract
-  recipient: string; // bytes32 in contract
-  filler: string; // bytes32 in contract
-  inputs: Token[];
-  outputs: Token[];
-  sourceChainId: number;
-  destinationChainId: number;
-  sponsored: boolean;
-  primaryFillerDeadline: bigint;
-  deadline: bigint;
-  callRecipient: string; // bytes32 in contract
-  callData: string; // bytes in contract
-  callValue: bigint;
-}
-
-interface OrderRequest {
-  deadline: bigint;
-  nonce: bigint;
-  order: Order;
 }
 
 // Funzione per validare la configurazione dell'ordine
@@ -190,18 +161,6 @@ const validateOrderConfiguration = (
     };
   }
 
-  // Verifica che il contratto spoke sia disponibile per la rete di output
-  const outputNetwork = config.find(
-    (net: any) =>
-      net.name.toLowerCase() === swapData.output.network.toLowerCase()
-  );
-  if (!outputNetwork?.contracts?.spoke) {
-    return {
-      isValid: false,
-      error: `Spoke contract not available for destination network: ${swapData.output.network}`
-    };
-  }
-
   // Verifica che la chain corrente corrisponda alla rete di input
   const expectedChainId = getChainIdByNetwork(swapData.input.network);
   if (chainId !== expectedChainId) {
@@ -212,44 +171,6 @@ const validateOrderConfiguration = (
   }
 
   return { isValid: true };
-};
-
-// Helper function per convertire un token in formato contratto
-const tokenToContractFormat = (
-  token: TokenOrDefiToken,
-  amount: number
-): Token => {
-  const isNative = !token.address || token.address === NULL_ADDRESS;
-  if (amount <= 0) {
-    throw new Error(`Invalid token amount: ${amount}`);
-  }
-
-  let parsedAmount: bigint;
-  try {
-    parsedAmount = parseUnits(amount.toString(), token.decimals);
-  } catch (error) {
-    throw new Error(
-      `Failed to parse amount ${amount} for token ${token.symbol}: ${error}`
-    );
-  }
-
-  console.log(
-    `Converting token ${
-      token.symbol
-    }: ${amount} -> ${parsedAmount.toString()} (decimals: ${token.decimals})`
-  );
-
-  // Convert address to bytes32 using pad from viem
-  const addressAsBytes32 = token.address
-    ? pad(token.address as Address, { size: 32 })
-    : pad('0x0', { size: 32 });
-
-  return {
-    tokenType: isNative ? TokenType.NATIVE : TokenType.ERC20,
-    tokenAddress: addressAsBytes32,
-    tokenId: BigInt(0),
-    amount: parsedAmount
-  };
 };
 
 // Helper function per ottenere il chain ID da network name
@@ -287,152 +208,182 @@ export const useOrderHub = () => {
   const chainId = useChainId();
   const { swapData } = useSwapContext();
   const { config } = useConfig();
+
   const { writeContract, isPending, isError, error, isSuccess } =
     useWriteContract();
-  const { signTypedDataAsync } = useSignTypedData();
 
-  // EIP-712 types for order signing
-  const getEIP712Types = () => ({
-    Token: [
-      { name: 'tokenType', type: 'uint8' },
-      { name: 'tokenAddress', type: 'bytes32' },
-      { name: 'tokenId', type: 'uint256' },
-      { name: 'amount', type: 'uint256' }
-    ],
-    Order: [
-      { name: 'user', type: 'bytes32' },
-      { name: 'recipient', type: 'bytes32' },
-      { name: 'filler', type: 'bytes32' },
-      { name: 'inputs', type: 'Token[]' },
-      { name: 'outputs', type: 'Token[]' },
-      { name: 'sourceChainId', type: 'uint32' },
-      { name: 'destinationChainId', type: 'uint32' },
-      { name: 'sponsored', type: 'bool' },
-      { name: 'primaryFillerDeadline', type: 'uint64' },
-      { name: 'deadline', type: 'uint64' },
-      { name: 'callRecipient', type: 'bytes32' },
-      { name: 'callData', type: 'bytes' },
-      { name: 'callValue', type: 'uint256' }
-    ],
-    OrderRequest: [
-      { name: 'deadline', type: 'uint64' },
-      { name: 'nonce', type: 'uint64' },
-      { name: 'order', type: 'Order' }
-    ]
-  });
+  const { signMessageAsync } = useSignMessage();
 
-  const getDomain = (hubAddress: string, chainId: number) => ({
-    name: 'iLayer',
-    version: '1',
-    chainId,
-    verifyingContract: hubAddress as Address
-  });
+  const hubAddress = getHubAddressByNetwork(swapData.input.network, config);
+
+  const orderRequest = useMemo(() => {
+    if (
+      !address ||
+      !hubAddress ||
+      !swapData.input.network ||
+      !swapData.output.network
+    ) {
+      return null;
+    }
+
+    const hasValidInputs = swapData.input.tokens.some((t: any) => t.amount > 0);
+    if (!hasValidInputs || !swapData.output.tokens.length) {
+      return null;
+    }
+
+    try {
+      const sourceChainId = getChainIdByNetwork(swapData.input.network);
+      const destinationChainId = getChainIdByNetwork(swapData.output.network);
+
+      const inputs: Token[] = swapData.input.tokens
+        .filter((t) => t.amount > 0)
+        .map((t) => {
+          const parsedAmount = parseUnits(
+            t.amount.toString(),
+            t.token.decimals
+          );
+          return tokenToContractFormat(t.token, parsedAmount);
+        });
+
+      const outputs: Token[] = swapData.output.tokens.map((t, index) => {
+        const percentage = swapData.outputPercentages[index] || 0;
+        const amount = t.amount * (percentage / 100);
+        const parsedAmount = parseUnits(amount.toString(), t.token.decimals);
+        return tokenToContractFormat(t.token, parsedAmount);
+      });
+
+      // TODO: take from settings
+      const maxDeadlineHours = 24;
+      const deadline = BigInt(
+        Math.floor(Date.now() / 1000) + maxDeadlineHours * 3600
+      );
+      const nonce = BigInt(Math.floor(Math.random() * 1000000000));
+
+      return prepareOrderRequest(
+        address,
+        inputs,
+        outputs,
+        sourceChainId,
+        destinationChainId,
+        deadline,
+        nonce
+      );
+    } catch (error) {
+      console.error('Error preparing order request:', error);
+      return null;
+    }
+  }, [
+    address,
+    hubAddress,
+    swapData.input.network,
+    swapData.output.network,
+    swapData.input.tokens,
+    swapData.output.tokens,
+    swapData.outputPercentages,
+    // Aggiorna ogni minuto per il nonce e deadline
+    Math.floor(Date.now() / 60000)
+  ]);
+
+  // Leggi il domainSeparator dal contratto
+  const { data: contractDomainSeparator, isError: domainSeparatorError } =
+    useReadContract({
+      address: hubAddress as Address,
+      abi: orderHubAbi,
+      functionName: 'domainSeparator',
+      chainId: getChainIdByNetwork(swapData.input.network),
+      query: {
+        enabled: !!hubAddress && !!swapData.input.network
+      }
+    });
+
+  // Leggi l'hash dell'OrderRequest dal contratto quando disponibile
+  const { data: contractOrderRequestHash, isError: orderRequestHashError } =
+    useReadContract({
+      address: hubAddress as Address,
+      abi: orderHubAbi,
+      functionName: 'hashOrderRequest',
+      args: orderRequest ? [orderRequest] : undefined,
+      chainId: getChainIdByNetwork(swapData.input.network),
+      query: {
+        enabled: !!hubAddress && !!swapData.input.network && !!orderRequest
+      }
+    });
+
+  // Controlla se tutti i dati necessari sono pronti
+  const isReadyToSign = !!(
+    contractDomainSeparator &&
+    orderRequest &&
+    contractOrderRequestHash
+  );
 
   const createOrder = async () => {
     if (!address) {
       throw new Error('Please connect your wallet first');
     }
 
-    // Ottieni l'indirizzo del contratto hub dalla configurazione
-    const hubAddress = getHubAddressByNetwork(swapData.input.network, config);
-
     const sourceChainId = getChainIdByNetwork(swapData.input.network);
-    const destinationChainId = getChainIdByNetwork(swapData.output.network);
-
-    // Converti i token input
-    const inputs: Token[] = swapData.input.tokens
-      .filter((t) => t.amount > 0)
-      .map((t) => tokenToContractFormat(t.token, t.amount));
-
-    // Converti i token output
-    const outputs: Token[] = swapData.output.tokens.map((t, index) => {
-      const percentage = swapData.outputPercentages[index] || 0;
-      const amount = t.amount * (percentage / 100);
-      return tokenToContractFormat(t.token, amount);
-    });
-
-    // Calcola deadline con validazione (massimo 24 ore per sicurezza)
-    const maxDeadlineHours = 24;
-    const deadline = BigInt(
-      Math.floor(Date.now() / 1000) + maxDeadlineHours * 3600
-    );
-    const nonce = BigInt(Math.floor(Math.random() * 1000000000)); // Nonce più grande per ridurre collisioni
-
-    // Validazione delle deadline
-    const primaryFillerBuffer = BigInt(600); // 10 minuti di buffer per il primary filler
-    const primaryFillerDeadline = deadline - primaryFillerBuffer;
-
-    if (primaryFillerDeadline <= BigInt(Math.floor(Date.now() / 1000))) {
-      throw new Error('Invalid deadline configuration. Please try again.');
+    if (chainId !== sourceChainId) {
+      throw new Error(
+        `Wrong network! Please switch to ${swapData.input.network} (Chain ID: ${sourceChainId}). Currently on Chain ID: ${chainId}`
+      );
     }
 
-    const order: Order = {
-      user: pad(address, { size: 32 }),
-      recipient: pad(address, { size: 32 }),
-      filler: pad('0x0', { size: 32 }),
-      inputs,
-      outputs,
-      sourceChainId,
-      destinationChainId,
-      sponsored: false,
-      primaryFillerDeadline,
-      deadline,
-      callRecipient: pad('0x0', { size: 32 }),
-      callData: '0x',
-      callValue: BigInt(0)
-    };
+    if (!hubAddress) {
+      throw new Error(
+        `Hub contract not found for network: ${swapData.input.network}`
+      );
+    }
 
-    const orderRequest: OrderRequest = {
-      deadline,
-      nonce,
-      order
-    };
+    if (!contractDomainSeparator) {
+      throw new Error(
+        'Domain separator not available from contract. Please ensure you are connected to the correct network.'
+      );
+    }
 
-    // Calcola il valore nativo necessario
-    const nativeValue = calculateNativeValue(inputs);
+    if (!contractOrderRequestHash) {
+      throw new Error(
+        'Failed to read order request hash from contract. Please ensure you are connected to the correct network.'
+      );
+    }
+
+    if (!orderRequest) {
+      throw new Error(
+        'Order request not ready. Please check your input and output tokens.'
+      );
+    }
+
+    if (!isReadyToSign) {
+      throw new Error(
+        'Order data not ready. Please ensure domain separator and order request hash are available from contract.'
+      );
+    }
+
+    const nativeValue = calculateNativeValue(orderRequest.order.inputs);
 
     try {
+      const sourceChainId = getChainIdByNetwork(swapData.input.network);
+      const destinationChainId = getChainIdByNetwork(swapData.output.network);
+
       console.log('Creating order with:', {
         hubAddress,
         sourceChainId,
         destinationChainId,
         currentChainId: chainId,
-        inputs: inputs.map((i) => ({
+        inputs: orderRequest.order.inputs.map((i) => ({
           type: i.tokenType,
           address: i.tokenAddress,
           amount: i.amount.toString()
         })),
-        nativeValue: nativeValue.toString()
+        nativeValue: nativeValue.toString(),
+        contractDomainSeparator,
+        contractOrderRequestHash
       });
 
-      // Verifica finale che siamo sulla chain corretta
-      if (chainId !== sourceChainId) {
-        throw new Error(
-          `Wrong network! Please switch to ${swapData.input.network} (Chain ID: ${sourceChainId}). Currently on Chain ID: ${chainId}`
-        );
-      }
-
-      // Verifica che hubAddress non sia null
-      if (!hubAddress) {
-        throw new Error(
-          `Hub contract not found for network: ${swapData.input.network}`
-        );
-      }
-
-      // Firma l'OrderRequest usando EIP-712
-      const domain = getDomain(hubAddress, sourceChainId);
-      const types = getEIP712Types();
-
-      console.log('Signing order request...', { orderRequest, domain, types });
-
-      const signature = await signTypedDataAsync({
-        domain,
-        types,
-        primaryType: 'OrderRequest',
-        message: orderRequest as any // Cast needed for wagmi types
-      });
-
-      console.log('Order signed:', signature);
+      const message = prepareSignatureData(
+        contractDomainSeparator as `0x${string}`,
+        contractOrderRequestHash as `0x${string}`
+      );
+      const signature = await signMessageAsync({ message });
 
       const args = [
         orderRequest, // OrderRequest struct
@@ -442,8 +393,6 @@ export const useOrderHub = () => {
         '0x' // extra data
       ];
 
-      console.log('Order args:', args);
-
       const estimatedGas = (await publicClient?.estimateContractGas({
         address: hubAddress as Address,
         abi: orderHubAbi,
@@ -451,6 +400,7 @@ export const useOrderHub = () => {
         args,
         value: nativeValue
       })) as bigint;
+
       console.log('Estimated gas:', estimatedGas.toString());
 
       writeContract({
