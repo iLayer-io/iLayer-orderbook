@@ -4,9 +4,10 @@ import {
   useWriteContract,
   useAccount,
   useChainId,
-  usePublicClient
+  usePublicClient,
+  useSignTypedData
 } from 'wagmi';
-import { Address, encodeAbiParameters, parseUnits } from 'viem';
+import { Address, parseUnits, pad } from 'viem';
 import { orderHubAbi } from '@/abi/order-hub-abi';
 import { useSwapContext } from '@/contexts/SwapContext';
 import { useConfig } from '@/contexts/ConfigContext';
@@ -128,15 +129,15 @@ enum BridgeSelector {
 
 interface Token {
   tokenType: number;
-  tokenAddress: Address;
+  tokenAddress: string; // bytes32 in contract
   tokenId: bigint;
   amount: bigint;
 }
 
 interface Order {
-  user: Address;
-  recipient: Address;
-  filler: Address;
+  user: string; // bytes32 in contract
+  recipient: string; // bytes32 in contract
+  filler: string; // bytes32 in contract
   inputs: Token[];
   outputs: Token[];
   sourceChainId: number;
@@ -144,8 +145,8 @@ interface Order {
   sponsored: boolean;
   primaryFillerDeadline: bigint;
   deadline: bigint;
-  callRecipient: Address;
-  callData: Address;
+  callRecipient: string; // bytes32 in contract
+  callData: string; // bytes in contract
   callValue: bigint;
 }
 
@@ -238,14 +239,15 @@ const tokenToContractFormat = (
     }: ${amount} -> ${parsedAmount.toString()} (decimals: ${token.decimals})`
   );
 
+  // Convert address to bytes32 using pad from viem
+  const addressAsBytes32 = token.address
+    ? pad(token.address as Address, { size: 32 })
+    : pad('0x0', { size: 32 });
+
   return {
     tokenType: isNative ? TokenType.NATIVE : TokenType.ERC20,
-    tokenAddress: encodeAbiParameters(
-      [{ type: 'address' }],
-      [token.address || NULL_ADDRESS]
-    ),
+    tokenAddress: addressAsBytes32,
     amount: parsedAmount,
-    //TODO: check if this is correct
     tokenId: BigInt(0)
   };
 };
@@ -287,6 +289,44 @@ export const useOrderHub = () => {
   const { config } = useConfig();
   const { writeContract, isPending, isError, error, isSuccess } =
     useWriteContract();
+  const { signTypedDataAsync } = useSignTypedData();
+
+  // EIP-712 types for order signing
+  const getEIP712Types = () => ({
+    Token: [
+      { name: 'tokenType', type: 'uint8' },
+      { name: 'tokenAddress', type: 'bytes32' },
+      { name: 'tokenId', type: 'uint256' },
+      { name: 'amount', type: 'uint256' }
+    ],
+    Order: [
+      { name: 'user', type: 'bytes32' },
+      { name: 'recipient', type: 'bytes32' },
+      { name: 'filler', type: 'bytes32' },
+      { name: 'inputs', type: 'Token[]' },
+      { name: 'outputs', type: 'Token[]' },
+      { name: 'sourceChainId', type: 'uint32' },
+      { name: 'destinationChainId', type: 'uint32' },
+      { name: 'sponsored', type: 'bool' },
+      { name: 'primaryFillerDeadline', type: 'uint64' },
+      { name: 'deadline', type: 'uint64' },
+      { name: 'callRecipient', type: 'bytes32' },
+      { name: 'callData', type: 'bytes' },
+      { name: 'callValue', type: 'uint256' }
+    ],
+    OrderRequest: [
+      { name: 'deadline', type: 'uint64' },
+      { name: 'nonce', type: 'uint64' },
+      { name: 'order', type: 'Order' }
+    ]
+  });
+
+  const getDomain = (hubAddress: string, chainId: number) => ({
+    name: 'iLayer',
+    version: '1',
+    chainId,
+    verifyingContract: hubAddress as Address
+  });
 
   const createOrder = async () => {
     if (!address) {
@@ -327,8 +367,8 @@ export const useOrderHub = () => {
     }
 
     const order: Order = {
-      user: encodeAbiParameters([{ type: 'address' }], [address]),
-      recipient: encodeAbiParameters([{ type: 'address' }], [address]),
+      user: pad(address, { size: 32 }),
+      recipient: pad(address, { size: 32 }),
       inputs,
       outputs,
       sourceChainId,
@@ -336,9 +376,8 @@ export const useOrderHub = () => {
       sponsored: false,
       primaryFillerDeadline,
       deadline,
-      //TODO: check if those are correct
-      filler: encodeAbiParameters([{ type: 'address' }], [NULL_ADDRESS]),
-      callRecipient: encodeAbiParameters([{ type: 'address' }], [NULL_ADDRESS]),
+      filler: pad('0x0', { size: 32 }), // NULL_ADDRESS as bytes32
+      callRecipient: pad('0x0', { size: 32 }), // NULL_ADDRESS as bytes32
       callData: '0x',
       callValue: BigInt(0)
     };
@@ -373,13 +412,34 @@ export const useOrderHub = () => {
         );
       }
 
+      // Verifica che hubAddress non sia null
+      if (!hubAddress) {
+        throw new Error(
+          `Hub contract not found for network: ${swapData.input.network}`
+        );
+      }
+
+      // Firma l'OrderRequest usando EIP-712
+      const domain = getDomain(hubAddress, sourceChainId);
+      const types = getEIP712Types();
+
+      console.log('Signing order request...', { orderRequest, domain, types });
+
+      const signature = await signTypedDataAsync({
+        domain,
+        types,
+        primaryType: 'OrderRequest',
+        message: orderRequest as any // Cast needed for wagmi types
+      });
+
+      console.log('Order signed:', signature);
+
       const args = [
-        orderRequest,
-        // TODO: Permits, signature, bridgeSelector, extra
-        [],
-        NULL_ADDRESS,
-        BridgeSelector.NONE,
-        NULL_ADDRESS
+        orderRequest, // OrderRequest struct
+        [], // permits array (empty for now)
+        signature, // EIP-712 signature
+        BridgeSelector.NONE, // bridge selector
+        '0x' // extra data
       ];
 
       console.log('Order args:', args);
