@@ -92,7 +92,7 @@
     "decimals": 18,
     "icon": "arbitrum.png",
     "contracts": {
-      "hub": "0x98884F192fa911e44Df4a6a9E949e69896F65F5e",
+      "hub": "0x4C5aD92ae9Bb01768D73933f80E2EF49F8205DDE",
       "spoke": "0x57240D8e8cDCC5918c7F5e085874Af6d91b8Db00",
       "router": "0xbe3Fb6Ce351f888D03eEbB17C0B3823eB455EF29"
     },
