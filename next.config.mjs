@@ -1,6 +1,7 @@
-const isGhPages = process.env.DEPLOY_TARGET === 'gh-pages';
-const isProd = process.env.NODE_ENV === 'production';
-const repo = 'iLayer-orderbook';
+export const isGhPages = process.env.DEPLOY_TARGET === 'gh-pages';
+export const isProd = process.env.NODE_ENV === 'production';
+export const repo = 'iLayer-orderbook';
+export const baseUrl = isGhPages && isProd ? `/${repo}` : '';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -14,8 +15,8 @@ const nextConfig = {
     unoptimized: true
   },
   output: 'export',
-  basePath: isGhPages && isProd ? `/${repo}` : '',
-  assetPrefix: isGhPages && isProd ? `/${repo}/` : ''
+  basePath: baseUrl,
+  assetPrefix: baseUrl
 };
 
 export default nextConfig;

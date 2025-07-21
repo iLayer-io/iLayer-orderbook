@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TokenBalance } from "@/components/token-balance"
 import { useConfig } from "@/contexts/ConfigContext"
-import { safeParseFloat } from "@/lib/utils"
+import { baseUrl, safeParseFloat } from "@/lib/utils"
 
 interface TokenRowProps {
     tokenWithAmount: { symbol: string; amount: string }
@@ -57,7 +57,7 @@ export default function TokenRow({
                 {token ? (
                     <>
                         <img
-                            src={`/tokens/${token.icon}`}
+                            src={`${baseUrl}/tokens/${token.icon}`}
                             alt={token.symbol}
                             className="h-8 w-8 rounded-full"
                         />

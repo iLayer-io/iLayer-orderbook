@@ -12,6 +12,7 @@ import { useConfig } from "@/contexts/ConfigContext"
 import { useSwap } from "@/contexts/SwapContext"
 import { useSwitchChain } from "wagmi"
 import { DialogTitle } from "./ui/dialog"
+import { baseUrl } from "@/lib/utils"
 
 interface TokenSelectorContentProps {
   title: string
@@ -215,7 +216,7 @@ export default function TokenSelectorContent({
                     }`}
                 >
                   <div className="h-8 w-8 rounded-full flex items-center justify-center">
-                    <img src={`/networks/${network.icon}`} alt={network.name} className="h-6 w-6" />
+                    <img src={`${baseUrl}/networks/${network.icon}`} alt={network.name} className="h-6 w-6" />
                   </div>
                 </button>
               ))}
@@ -265,7 +266,7 @@ export default function TokenSelectorContent({
                   onClick={() => handleTokenSelect(token)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 transition-colors"
                 >
-                  <img src={`/tokens/${token.icon}`} alt={token.symbol} className="h-8 w-8 rounded-full" />
+                  <img src={`${baseUrl}/tokens/${token.icon}`} alt={token.symbol} className="h-8 w-8 rounded-full" />
                   <div className="flex-1 text-left">
                     <div className="font-medium">{token.symbol}</div>
                     <div className="text-sm text-gray-400">{token.name}</div>
@@ -291,7 +292,7 @@ export default function TokenSelectorContent({
                     onClick={() => handleTokenSelect(token)}
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 transition-colors"
                   >
-                    <img src={`/tokens/${token.icon}`} alt={token.symbol} className="h-8 w-8 rounded-full" />
+                    <img src={`${baseUrl}/tokens/${token.icon}`} alt={token.symbol} className="h-8 w-8 rounded-full" />
                     <div className="flex-1 text-left">
                       <div className="font-medium">{token.symbol}</div>
                       <div className="text-sm text-gray-400">{token.name}</div>
@@ -319,7 +320,7 @@ export default function TokenSelectorContent({
                     onClick={() => handleProtocolSelect(protocol)}
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 transition-colors"
                   >
-                    <img src={`/protocols/${protocol.icon}`} alt={protocol.name} className="h-8 w-8 rounded-full" />
+                    <img src={`${baseUrl}/protocols/${protocol.icon}`} alt={protocol.name} className="h-8 w-8 rounded-full" />
                     <div className="flex-1 text-left">
                       <div className="font-medium">{protocol.name}</div>
                       <div className="text-xs text-gray-400">{protocol.networkName}</div>

@@ -5,6 +5,7 @@ import "@/app/globals.css"
 import { Inter } from "next/font/google"
 import { Providers } from "@/contexts/Providers"
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { baseUrl } from "@/lib/utils"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,7 +24,7 @@ export default function RootLayout({
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10">
                     <img
-                      src="/logo.svg"
+                      src={`${baseUrl}/logo.svg`}
                       alt="iLayer Logo" />
                   </div>
                   <h1 className="hidden md:flex text-xl font-semibold text-white">iLayer Orderbook</h1>

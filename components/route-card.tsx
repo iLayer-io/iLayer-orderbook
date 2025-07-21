@@ -1,7 +1,7 @@
 import { Clock } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { safeParseFloat } from "@/lib/utils"
+import { baseUrl, safeParseFloat } from "@/lib/utils"
 import { Quote } from "@/types/swap"
 
 type RouteProps = {
@@ -51,7 +51,7 @@ export default function RouteCard({ route, onSelect, isSelected }: RouteProps) {
           {route.source && (
             <>
               {route.sourceLogo && (
-                <img src={route.sourceLogo} alt={route.source} className="h-4 w-4" />
+                <img src={`${baseUrl}/${route.sourceLogo}`} alt={route.source} className="h-4 w-4" />
               )}
               <span className="text-sm text-gray-300">{route.source}</span>
             </>

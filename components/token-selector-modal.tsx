@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useConfig } from "@/contexts/ConfigContext"
 import { useSwap } from "@/contexts/SwapContext"
 import type { TokenOrDefiToken, Network, Defi } from "@/types/swap"
+import { baseUrl } from "@/lib/utils"
 
 interface TokenSelectorModalProps {
   isOpen: boolean
@@ -124,7 +125,7 @@ export default function TokenSelectorModal({
                         }`}
                     >
                       <div className="h-8 w-8 rounded-full bg-zinc-700 flex items-center justify-center">
-                        <img src={`/networks/${network.icon}`} alt={network.name} className="h-5 w-5" />
+                        <img src={`${baseUrl}/networks/${network.icon}`} alt={network.name} className="h-5 w-5" />
                       </div>
                     </button>
                   ))}
@@ -164,7 +165,7 @@ export default function TokenSelectorModal({
                     onClick={() => handleTokenSelect(token)}
                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 transition-colors"
                   >
-                    <img src={`/tokens/${token.icon}`} alt={token.symbol} className="h-8 w-8 rounded-full" />
+                    <img src={`${baseUrl}/tokens/${token.icon}`} alt={token.symbol} className="h-8 w-8 rounded-full" />
                     <div className="flex-1 text-left">
                       <div className="font-medium">{token.symbol}</div>
                       <div className="text-sm text-gray-400">{token.name}</div>
@@ -189,7 +190,7 @@ export default function TokenSelectorModal({
                       onClick={() => handleTokenSelect(token)}
                       className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 transition-colors"
                     >
-                      <img src={`/tokens/${token.icon}`} alt={token.symbol} className="h-8 w-8 rounded-full" />
+                      <img src={`${baseUrl}/tokens/${token.icon}`} alt={token.symbol} className="h-8 w-8 rounded-full" />
                       <div className="flex-1 text-left">
                         <div className="font-medium">{token.symbol}</div>
                         <div className="text-sm text-gray-400">{token.name}</div>

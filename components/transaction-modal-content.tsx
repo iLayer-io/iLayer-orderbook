@@ -10,7 +10,7 @@ import { useOrderHub } from "@/hooks/useOrderHub"
 import { useSwap } from "@/contexts/SwapContext"
 import { useConfig } from "@/contexts/ConfigContext"
 import { Quote } from "@/types/swap"
-import { safeParseFloat } from "@/lib/utils"
+import { baseUrl, safeParseFloat } from "@/lib/utils"
 
 type TransactionStep = 'details' | 'pending' | 'outcome'
 
@@ -116,7 +116,7 @@ export default function TransactionModalContent({
                             return (
                                 <div key={index} className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
-                                        <img src={`/tokens/${tokenData?.icon}`} alt={token.symbol} className="h-6 w-6 rounded-full" />
+                                        <img src={`${baseUrl}/tokens/${tokenData?.icon}`} alt={token.symbol} className="h-6 w-6 rounded-full" />
                                         <span className="font-medium">{token.symbol}</span>
                                     </div>
                                     <span className="font-medium">{token.amount}</span>
@@ -143,7 +143,7 @@ export default function TransactionModalContent({
                         return (
                             <div key={index} className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <img src={`/tokens/${tokenData?.icon}`} alt={token.symbol} className="h-6 w-6 rounded-full" />
+                                    <img src={`${baseUrl}/tokens/${tokenData?.icon}`} alt={token.symbol} className="h-6 w-6 rounded-full" />
                                     <span className="font-medium">{token.symbol}</span>
                                 </div>
                                 <span className="font-medium">{token.amount || '~'}</span>
