@@ -130,15 +130,6 @@ export const getErrorMessage = (error: any): string => {
     return 'Transaction was rejected by user.';
   }
 
-  // Controlla prima gli errori di network
-  if (errorMessage.includes('Chain ID') || errorMessage.includes('chain')) {
-    return errorMessage; // Restituisci il messaggio originale per errori di chain
-  }
-
-  if (errorMessage.includes('Wrong network')) {
-    return errorMessage; // Restituisci il messaggio originale per errori di network
-  }
-
   // Controlla errori di gas estremi
   if (
     errorMessage.includes('gas') &&
@@ -189,7 +180,7 @@ export const getErrorMessage = (error: any): string => {
     return 'Transaction failed due to gas issues. Please try increasing gas limit or check if you are on the correct network.';
   }
 
-  return `Transaction failed: ${errorMessage}`;
+  return `Transaction failed, try later.`;
 };
 
 export const getDomain = (sourceChainId: number, hubAddress: string) => ({
