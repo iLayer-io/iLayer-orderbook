@@ -14,13 +14,6 @@ export enum TokenType {
   ERC1155 = 4
 }
 
-export enum BridgeSelector {
-  NONE = 0,
-  WORMHOLE = 1,
-  CCTP = 2,
-  HYPERLANE = 3
-}
-
 // Interfacce che corrispondono alle struct del contratto
 export interface Token {
   tokenType: number;

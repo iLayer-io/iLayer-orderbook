@@ -13,20 +13,13 @@ import { safeParseFloat } from '@/lib/utils';
 import { Quote } from '@/types/swap';
 
 export const AUTO_REFRESH_INTERVAL = 60000; // 60 secondi
-const QUOTE_TIMEOUT = 5000; // 5 secondi per ascoltare i messaggi
+const QUOTE_TIMEOUT = 2000; // 2 secondi per ascoltare i messaggi
 export const MAX_QUOTES = 3; // Limite massimo di quote da mostrare
 
 export function useWakuQuotes() {
   const { swapData, setSelectedQuote, updateOutputAmount } = useSwap();
   const { getTokenByChainAndAddress } = useConfig();
   const { getTokenBySymbol } = useConfig();
-
-  const mockEthTokenAmount = swapData.input.tokens.flatMap((t) => {
-    if (t.symbol === 'ETH') {
-      return [{ ...t, amount: safeParseFloat(t.amount) * 3838.33 }];
-    }
-    return [];
-  })[0].amount;
 
   // Usa il hook useWaku per gestire il nodo
   const {
@@ -174,13 +167,35 @@ export function useWakuQuotes() {
               getTokenByChainAndAddress(response.from.network, token.address)
                 ?.symbol || 'N/A'
           })),
-          outputTokens: response.to.tokens.map((token: any) => ({
-            address: token.address,
-            amount: mockEthTokenAmount, // TODO: remove mock
-            symbol:
-              getTokenByChainAndAddress(response.to.network, token.address)
-                ?.symbol || 'N/A'
-          })),
+          outputTokens: response.to.tokens.map((token: any, index: number) => {
+            // TODO: remove mock
+            const mockedUSDAmounts = swapData.input.tokens.flatMap((t) => {
+              let mockedAmount;
+              const inputTokenAmount = safeParseFloat(t.amount);
+              switch (t.symbol) {
+                case 'ETH': {
+                  mockedAmount = inputTokenAmount * 3838.33;
+                  break;
+                }
+                case 'ARB': {
+                  mockedAmount = inputTokenAmount * 0.5088;
+                  break;
+                }
+                default:
+                  mockedAmount = 0;
+              }
+
+              return [mockedAmount];
+            });
+
+            return {
+              address: token.address,
+              amount: mockedUSDAmounts[index],
+              symbol:
+                getTokenByChainAndAddress(response.to.network, token.address)
+                  ?.symbol || 'N/A'
+            };
+          }),
           network: {
             from: response.from.network,
             to: response.to.network

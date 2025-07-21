@@ -14,7 +14,6 @@ import { Address, parseUnits } from 'viem';
 import { orderHubAbi } from '@/lib/order-hub-abi';
 import { useConfig } from '@/contexts/ConfigContext';
 import {
-  BridgeSelector,
   getDomain,
   getErrorMessage,
   getTypes,
@@ -185,6 +184,7 @@ export const useOrderHub = () => {
     if (estimatedBridgingFee === undefined) {
       throw new Error('Bridging fee not found');
     }
+    debugger;
 
     const inputs: Token[] = swapData.input.tokens
       .filter((t) => safeParseFloat(t.amount) > 0)
@@ -269,9 +269,9 @@ export const useOrderHub = () => {
 
       const args = [
         orderRequest, // OrderRequest struct
-        permits, // permits array (now properly sized)
+        permits, // permits array (now properly sized
         signature, // EIP-712 signature
-        BridgeSelector.NONE, // bridge selector
+        sourceChainId !== destinationChainId ? 1 : 0,
         '0x' // extra data
       ];
 
