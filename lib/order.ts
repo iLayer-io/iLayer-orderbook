@@ -1,16 +1,17 @@
-import { pad, Address } from 'viem';
+import { pad, Address, padHex } from 'viem';
 import { TokenOrDefiToken } from '@/types/swap';
 
-const pad32 = (value: Address) => pad(value, { size: 32 });
+const pad32 = (value: Address) => padHex(value, { dir: 'left', size: 32 });
 
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Enum per il tipo di token (corrisponde al contratto)
-enum TokenType {
-  ERC20 = 0,
-  ERC721 = 1,
-  ERC1155 = 2,
-  NATIVE = 3
+export enum TokenType {
+  NULL = 0,
+  NATIVE = 1,
+  ERC20 = 2,
+  ERC721 = 3,
+  ERC1155 = 4
 }
 
 export enum BridgeSelector {
@@ -21,7 +22,7 @@ export enum BridgeSelector {
 }
 
 // Interfacce che corrispondono alle struct del contratto
-interface Token {
+export interface Token {
   tokenType: number;
   tokenAddress: string; // bytes32
   tokenId: bigint;
@@ -128,7 +129,13 @@ export enum OrderHubError {
 
 // Helper function per tradurre gli errori del contratto in messaggi user-friendly
 export const getErrorMessage = (error: any): string => {
-  const errorMessage = error?.message || error?.toString() || '';
+  const errorMessage = (error?.message || error?.toString() || '')
+    .toLowerCase()
+    .trim();
+
+  if (errorMessage.includes('user rejected')) {
+    return 'Transaction was rejected by user.';
+  }
 
   // Controlla prima gli errori di network
   if (errorMessage.includes('Chain ID') || errorMessage.includes('chain')) {
@@ -192,6 +199,38 @@ export const getErrorMessage = (error: any): string => {
   return `Transaction failed: ${errorMessage}`;
 };
 
-// Esporta i tipi per l'uso in altri file
-export type { Token, Order, OrderRequest };
-export { TokenType };
+export const getDomain = (sourceChainId: number, hubAddress: string) => ({
+  name: 'iLayer',
+  version: '1',
+  chainId: sourceChainId,
+  verifyingContract: hubAddress as `0x${string}`
+});
+
+export const getTypes = () => ({
+  OrderRequest: [
+    { name: 'deadline', type: 'uint64' },
+    { name: 'nonce', type: 'uint64' },
+    { name: 'order', type: 'Order' }
+  ],
+  Order: [
+    { name: 'user', type: 'bytes32' },
+    { name: 'recipient', type: 'bytes32' },
+    { name: 'filler', type: 'bytes32' },
+    { name: 'inputs', type: 'Token[]' },
+    { name: 'outputs', type: 'Token[]' },
+    { name: 'sourceChainId', type: 'uint32' },
+    { name: 'destinationChainId', type: 'uint32' },
+    { name: 'sponsored', type: 'bool' },
+    { name: 'primaryFillerDeadline', type: 'uint64' },
+    { name: 'deadline', type: 'uint64' },
+    { name: 'callRecipient', type: 'bytes32' },
+    { name: 'callData', type: 'bytes' },
+    { name: 'callValue', type: 'uint256' }
+  ],
+  Token: [
+    { name: 'tokenType', type: 'uint8' },
+    { name: 'tokenAddress', type: 'bytes32' },
+    { name: 'tokenId', type: 'uint256' },
+    { name: 'amount', type: 'uint256' }
+  ]
+});

@@ -270,9 +270,6 @@ export default function TokenSelectorContent({
                     <div className="font-medium">{token.symbol}</div>
                     <div className="text-sm text-gray-400">{token.name}</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-medium">{'yield' in token ? `${token.yield}% APY` : '0.00'}</div>
-                  </div>
                 </button>
               ))}
             </div>
@@ -299,9 +296,6 @@ export default function TokenSelectorContent({
                       <div className="font-medium">{token.symbol}</div>
                       <div className="text-sm text-gray-400">{token.name}</div>
                       <div className="text-xs text-gray-400">{token.networkName}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium">{token.balance?.toFixed(2) || '0.00'}</div>
                     </div>
                   </button>
                 ))}

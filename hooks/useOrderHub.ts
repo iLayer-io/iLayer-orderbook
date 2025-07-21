@@ -4,16 +4,18 @@ import {
   useWriteContract,
   useAccount,
   useChainId,
-  usePublicClient,
   useSignTypedData,
-  useReadContract
+  useReadContract,
+  useBlock
 } from 'wagmi';
 import { Address, parseUnits } from 'viem';
 import { orderHubAbi } from '@/lib/order-hub-abi';
 import { useConfig } from '@/contexts/ConfigContext';
 import {
   BridgeSelector,
+  getDomain,
   getErrorMessage,
+  getTypes,
   prepareOrderRequest,
   tokenToContractFormat,
   TokenType,
@@ -25,10 +27,11 @@ import { safeParseFloat } from '@/lib/utils';
 
 export const useOrderHub = () => {
   const { address } = useAccount();
-  const publicClient = usePublicClient();
   const chainId = useChainId();
   const { getHubAddressByNetwork, getChainId, getTokenBySymbol } = useConfig();
   const { swapData } = useSwap();
+  const sourceChainId = getChainId(swapData.input.network);
+  const destinationChainId = getChainId(swapData.output.network);
 
   const validateOrderConfiguration = (): {
     isValid: boolean;
@@ -36,6 +39,13 @@ export const useOrderHub = () => {
   } => {
     if (!swapData.input.tokens.length || !swapData.output.tokens.length) {
       return { isValid: false, error: 'Input and output tokens are required' };
+    }
+
+    if (!sourceChainId) {
+      return {
+        isValid: false,
+        error: 'Source chain ID not found for input network'
+      };
     }
 
     // Check if we have valid input amounts (equivalent to canSwap logic)
@@ -72,8 +82,7 @@ export const useOrderHub = () => {
       };
     }
 
-    const expectedChainId = getChainId(swapData.input.network);
-    if (chainId !== expectedChainId) {
+    if (chainId !== sourceChainId) {
       return {
         isValid: false,
         error: `Please switch to ${swapData.input.network} network`
@@ -83,10 +92,15 @@ export const useOrderHub = () => {
     return { isValid: true };
   };
 
-  const { writeContract, isPending, isError, error, isSuccess } =
+  const { writeContractAsync, isPending, isError, error, isSuccess } =
     useWriteContract();
 
   const { signTypedDataAsync } = useSignTypedData();
+
+  // get latestblock
+  const { data: latestBlock } = useBlock({
+    blockTag: 'latest'
+  });
 
   const hubAddress = getHubAddressByNetwork(swapData.input.network);
 
@@ -95,9 +109,9 @@ export const useOrderHub = () => {
     address: hubAddress as Address,
     abi: orderHubAbi,
     functionName: 'nonce',
-    chainId: getChainId(swapData.input.network),
+    chainId: sourceChainId,
     query: {
-      enabled: !!hubAddress && !!swapData.input.network
+      enabled: !!hubAddress && !!sourceChainId
     }
   });
 
@@ -113,16 +127,13 @@ export const useOrderHub = () => {
   });
 
   const createOrder = async () => {
-    const sourceChainId = getChainId(swapData.input.network)!;
-    const destinationChainId = getChainId(swapData.output.network)!;
-
-    if (approval.needsApproval) {
-      await approval.execute();
-    }
-
     if (!address) {
       throw new Error('Please connect your wallet first');
     }
+    if (!sourceChainId || !destinationChainId) {
+      throw new Error('Source or destination chain ID not found');
+    }
+
     if (chainId !== sourceChainId) {
       throw new Error(
         `Wrong network! Please switch to ${swapData.input.network} (Chain ID: ${sourceChainId}). Currently on Chain ID: ${chainId}`
@@ -133,6 +144,18 @@ export const useOrderHub = () => {
       throw new Error(
         `Hub contract not found for network: ${swapData.input.network}`
       );
+    }
+
+    if (approval.needsApproval) {
+      await approval.execute();
+    }
+
+    if (!latestBlock) {
+      throw new Error('Latest block not available');
+    }
+
+    if (!contractNonce) {
+      throw new Error('Contract nonce not available');
     }
 
     const inputs: Token[] = swapData.input.tokens
@@ -151,13 +174,10 @@ export const useOrderHub = () => {
       return tokenToContractFormat(token!, parsedAmount);
     });
 
-    // Calculate deadlines like backend
-    const deadlineFillerGap = 3600; // 1 hour
-    const currentTimestamp = Math.floor(Date.now() / 1000);
-    const deadline = BigInt(currentTimestamp + 3 * deadlineFillerGap);
-    const primaryFillerDeadline = BigInt(
-      currentTimestamp + 2 * deadlineFillerGap
-    );
+    const deadlineFillerGap = BigInt(3600); // 1 hour
+    const timestamp = latestBlock.timestamp;
+    const deadline = timestamp + BigInt(3) * deadlineFillerGap;
+    const primaryFillerDeadline = timestamp + BigInt(2) * deadlineFillerGap;
 
     // Use contract nonce + 1 like backend
     const nonce = (contractNonce as bigint) + BigInt(1);
@@ -194,43 +214,6 @@ export const useOrderHub = () => {
         nonce: orderRequest.nonce.toString()
       });
 
-      // Use EIP-712 typed data signing with exact contract types
-      const domain = {
-        name: 'iLayer',
-        version: '1',
-        chainId: sourceChainId,
-        verifyingContract: hubAddress as `0x${string}`
-      };
-
-      const types = {
-        OrderRequest: [
-          { name: 'deadline', type: 'uint64' },
-          { name: 'nonce', type: 'uint64' },
-          { name: 'order', type: 'Order' }
-        ],
-        Order: [
-          { name: 'user', type: 'bytes32' },
-          { name: 'recipient', type: 'bytes32' },
-          { name: 'filler', type: 'bytes32' },
-          { name: 'inputs', type: 'Token[]' },
-          { name: 'outputs', type: 'Token[]' },
-          { name: 'sourceChainId', type: 'uint32' },
-          { name: 'destinationChainId', type: 'uint32' },
-          { name: 'sponsored', type: 'bool' },
-          { name: 'primaryFillerDeadline', type: 'uint64' },
-          { name: 'deadline', type: 'uint64' },
-          { name: 'callRecipient', type: 'bytes32' },
-          { name: 'callData', type: 'bytes' },
-          { name: 'callValue', type: 'uint256' }
-        ],
-        Token: [
-          { name: 'tokenType', type: 'uint8' },
-          { name: 'tokenAddress', type: 'bytes32' },
-          { name: 'tokenId', type: 'uint256' },
-          { name: 'amount', type: 'uint256' }
-        ]
-      };
-
       const message = {
         deadline: orderRequest.deadline,
         nonce: orderRequest.nonce,
@@ -238,8 +221,8 @@ export const useOrderHub = () => {
       };
 
       const signature = await signTypedDataAsync({
-        domain,
-        types,
+        domain: getDomain(sourceChainId, hubAddress),
+        types: getTypes(),
         primaryType: 'OrderRequest',
         message
       });
@@ -261,7 +244,7 @@ export const useOrderHub = () => {
         '0x' // extra data
       ];
 
-      writeContract({
+      await writeContractAsync({
         chainId: sourceChainId,
         address: hubAddress as Address,
         abi: orderHubAbi,
