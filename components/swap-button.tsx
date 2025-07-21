@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button"
 import { useOrderHub } from "@/hooks/useOrderHub"
 import { useSwap } from "@/contexts/SwapContext"
 import ResponsiveTransactionModal from "./responsive-transaction-modal"
+import { useAccount } from "wagmi"
 
 
 export default function SwapButton() {
     const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
     const { isValidOrder, getValidationError } = useOrderHub()
-    const { selectedQuote } = useSwap()
 
     const validationError = getValidationError()
     const isValid = isValidOrder()
@@ -19,13 +19,10 @@ export default function SwapButton() {
         if (validationError) {
             return validationError
         }
-        if (!selectedQuote) {
-            return 'No quote selected'
-        }
         return 'SWAP'
     }
 
-    const isButtonEnabled = isValid && !validationError && selectedQuote !== null
+    const isButtonEnabled = isValid && !validationError
 
     const handleSwapClick = () => {
         if (isButtonEnabled) {
@@ -49,7 +46,6 @@ export default function SwapButton() {
             <ResponsiveTransactionModal
                 isOpen={isTransactionModalOpen}
                 onClose={() => setIsTransactionModalOpen(false)}
-                selectedQuote={selectedQuote}
             />
         </>
     )

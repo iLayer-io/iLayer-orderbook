@@ -102,8 +102,6 @@ export interface SwapState {
 
 export interface SwapContextProps {
   swapData: SwapState;
-  updateInputNetwork: (network: string) => void;
-  updateOutputNetwork: (network: string) => void;
   updateInputTokens: (tokens: TokenOrDefiToken[]) => void;
   updateOutputTokens: (tokens: TokenOrDefiToken[]) => void;
   updateInputAmount: (symbol: string, amount: string) => void;
@@ -120,14 +118,12 @@ export interface SwapContextProps {
     isOpen: boolean;
     type: 'input' | 'output';
     editingTokenId: string;
-    selectedChain: string | null;
     searchQuery: string;
     activeTab: 'token' | 'defi';
     selectedProtocol: string | null;
   };
   openTokenSelector: (type: 'input' | 'output', tokenId: string) => void;
   closeTokenSelector: () => void;
-  setSelectedChain: (chainName: string | null) => void;
   setSearchQuery: (query: string) => void;
   setActiveTab: (tab: 'token' | 'defi') => void;
   setSelectedProtocol: (protocolName: string | null) => void;

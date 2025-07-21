@@ -44,7 +44,6 @@ const initialState: SwapState & {
         isOpen: boolean;
         type: 'input' | 'output';
         editingTokenId: string;
-        selectedChain: string | null;
         searchQuery: string;
         activeTab: 'token' | 'defi';
         selectedProtocol: string | null;
@@ -71,7 +70,6 @@ const initialState: SwapState & {
         isOpen: false,
         type: 'input',
         editingTokenId: '',
-        selectedChain: null,
         searchQuery: '',
         activeTab: 'token',
         selectedProtocol: null,
@@ -84,24 +82,6 @@ const swapReducer = (
     action: SwapAction
 ): typeof initialState => {
     switch (action.type) {
-        case 'UPDATE_INPUT_NETWORK':
-            return {
-                ...state,
-                input: {
-                    ...state.input,
-                    network: action.payload,
-                },
-            };
-
-        case 'UPDATE_OUTPUT_NETWORK':
-            return {
-                ...state,
-                output: {
-                    ...state.output,
-                    network: action.payload,
-                },
-            };
-
         case 'UPDATE_INPUT_TOKENS':
             return {
                 ...state,
@@ -194,15 +174,6 @@ const swapReducer = (
                 },
             };
 
-        case 'SET_SELECTED_CHAIN':
-            return {
-                ...state,
-                tokenSelector: {
-                    ...state.tokenSelector,
-                    selectedChain: action.payload,
-                },
-            };
-
         case 'SET_SEARCH_QUERY':
             return {
                 ...state,
@@ -234,7 +205,6 @@ const swapReducer = (
         case 'SELECT_TOKEN':
             const { type, editingTokenId } = state.tokenSelector;
             const newState = { ...state };
-
             if (type === 'input') {
                 // Update the specific input token at the given index
                 newState.input = {
@@ -280,8 +250,7 @@ const swapReducer = (
                     )
                 };
 
-                // In advanced mode, se abbiamo più token e selezioniamo una chain diversa, mantieni solo quello selezionato
-                if (advancedMode && state.input.tokens.length > 1) {
+                if (advancedMode && state.input.tokens.length > 1 && state.input.network !== tokenNetwork) {
                     const selectedTokenIndex = parseInt(editingTokenId);
                     newState.input = {
                         ...newState.input,
@@ -299,8 +268,7 @@ const swapReducer = (
                     )
                 };
 
-                // In advanced mode, se abbiamo più token e selezioniamo una chain diversa, mantieni solo quello selezionato
-                if (advancedMode && state.output.tokens.length > 1) {
+                if (advancedMode && state.output.tokens.length > 1 && state.output.network !== tokenNetwork) {
                     const selectedTokenIndex = parseInt(editingTokenId);
                     newState.output = {
                         ...newState.output,
@@ -415,13 +383,6 @@ interface SwapProviderProps {
 export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
     const [state, dispatch] = useReducer(swapReducer, initialState);
 
-    const updateInputNetwork = (network: string) => {
-        dispatch({ type: 'UPDATE_INPUT_NETWORK', payload: network });
-    };
-
-    const updateOutputNetwork = (network: string) => {
-        dispatch({ type: 'UPDATE_OUTPUT_NETWORK', payload: network });
-    };
 
     const updateInputTokens = (tokens: TokenOrDefiToken[]) => {
         dispatch({ type: 'UPDATE_INPUT_TOKENS', payload: tokens });
@@ -458,10 +419,6 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
 
     const closeTokenSelector = () => {
         dispatch({ type: 'CLOSE_TOKEN_SELECTOR' });
-    };
-
-    const setSelectedChain = (chainId: string | null) => {
-        dispatch({ type: 'SET_SELECTED_CHAIN', payload: chainId });
     };
 
     const setSearchQuery = (query: string) => {
@@ -511,17 +468,8 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
         dispatch({ type: 'UPDATE_OUTPUT_TOKEN_AMOUNT', payload: { tokenId, amount } });
     };
 
-    // Quote management functions
-    const setQuotes = (quotes: Quote[]) => {
-        dispatch({ type: 'SET_QUOTES', payload: quotes });
-    };
-
     const setSelectedQuote = (quote: Quote | null) => {
         dispatch({ type: 'SET_SELECTED_QUOTE', payload: quote });
-    };
-
-    const setIsFetchingQuotes = (isFetching: boolean) => {
-        dispatch({ type: 'SET_IS_FETCHING_QUOTES', payload: isFetching });
     };
 
     const value: SwapContextProps = {
@@ -532,8 +480,6 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
             advancedMode: state.advancedMode,
             selectedQuote: state.selectedQuote,
         },
-        updateInputNetwork,
-        updateOutputNetwork,
         updateInputTokens,
         updateOutputTokens,
         updateInputAmount,
@@ -548,7 +494,6 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
         tokenSelector: state.tokenSelector,
         openTokenSelector,
         closeTokenSelector,
-        setSelectedChain,
         setSearchQuery,
         setActiveTab,
         setSelectedProtocol,

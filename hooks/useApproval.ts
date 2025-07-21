@@ -13,7 +13,7 @@ import { Token, TokenType } from '@/lib/order';
 interface UseApprovalProps {
   tokens: Token[];
   spenderAddress: string | null;
-  chainId: number;
+  chainId?: number;
 }
 
 export const useApproval = ({

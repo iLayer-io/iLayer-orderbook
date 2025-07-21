@@ -30,7 +30,7 @@ export default function RootLayout({
                   <h1 className="hidden md:flex text-xl font-semibold text-white">iLayer Orderbook</h1>
                 </div>
                 <ConnectButton
-                  chainStatus={"none"}
+                  chainStatus="icon"
                   showBalance={false}
                   accountStatus={{
                     smallScreen: "avatar",

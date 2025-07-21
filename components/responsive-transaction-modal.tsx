@@ -3,21 +3,20 @@
 import { useMediaQuery } from "@/hooks/use-mobile"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Drawer, DrawerContent } from "@/components/ui/drawer"
-import { Quote } from "@/types/swap"
 import TransactionModalContent from "./transaction-modal-content"
+import { useSwap } from "@/contexts/SwapContext"
 
 interface ResponsiveTransactionModalProps {
     isOpen: boolean
     onClose: () => void
-    selectedQuote: Quote | null
 }
 
 export default function ResponsiveTransactionModal({
     isOpen,
     onClose,
-    selectedQuote,
 }: ResponsiveTransactionModalProps) {
     const isMobile = useMediaQuery("(max-width: 768px)")
+    const { selectedQuote } = useSwap()
 
     if (isMobile) {
         return (

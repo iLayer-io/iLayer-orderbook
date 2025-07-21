@@ -23,6 +23,7 @@ interface ConfigContextType {
     searchDefiProtocols: (query: string) => (Defi & { networkName: string })[];
     getDefiProtocolByName: (protocolName: string) => (Defi & { networkName: string }) | undefined;
     getHubAddressByNetwork: (networkName: string) => string | null;
+    getHubAddressByChainId: (chainId: number) => string | null;
     getRouterAddressByNetwork: (networkName: string) => string | null;
 }
 
@@ -35,6 +36,11 @@ interface ConfigProviderProps {
 export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
     const getHubAddressByNetwork = (networkName: string): string | null => {
         const network = config.find(n => n.name === networkName);
+        return network?.contracts?.hub || null;
+    };
+
+    const getHubAddressByChainId = (chainId: number): string | null => {
+        const network = config.find(n => n.chainId === chainId);
         return network?.contracts?.hub || null;
     };
 
@@ -186,6 +192,7 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
         networks: config,
         getChainEid,
         getRouterAddressByNetwork,
+        getHubAddressByChainId,
         getHubAddressByNetwork,
         getNetworkByName,
         getTokensByNetwork,

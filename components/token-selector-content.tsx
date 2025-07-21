@@ -16,8 +16,6 @@ import { baseUrl } from "@/lib/utils"
 
 interface TokenSelectorContentProps {
   title: string
-  selectedToken: TokenOrDefiToken | null
-  onSelectToken: (token: TokenOrDefiToken) => void
   onClose: () => void
   isMobile: boolean
 }
@@ -45,22 +43,13 @@ export default function TokenSelectorContent({
   isMobile,
 }: TokenSelectorContentProps) {
   const { getAllNetworks, getAllDefiProtocols, getTokensByChain, getChainId } = useConfig()
-  const { updateInputNetwork, updateOutputNetwork, tokenSelector, swapData, selectTokenWithNetworkCheck } = useSwap()
+  const { tokenSelector, swapData, selectTokenWithNetworkCheck } = useSwap()
   const { switchChain } = useSwitchChain()
 
   const [activeTab, setActiveTab] = useState<"token" | "defi">("token")
-  const [selectedChain, setSelectedChain] = useState<string>('Ethereum')
+  const [selectedChain, setSelectedChain] = useState<string>(tokenSelector.type === 'input' ? swapData.input.network : swapData.output.network)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedProtocol, setSelectedProtocol] = useState<(Defi & { networkName: string }) | null>()
-
-  // Sincronizza la chain selezionata con la rete di input quando il selettore si apre
-  useEffect(() => {
-    if (tokenSelector.type === 'input') {
-      setSelectedChain(swapData.input.network)
-    } else {
-      setSelectedChain(swapData.output.network)
-    }
-  }, [tokenSelector.type, swapData.input.network, swapData.output.network])
 
   // Get networks from config
   const networks: NetworkDisplay[] = getAllNetworks().map(network => ({
@@ -89,11 +78,7 @@ export default function TokenSelectorContent({
       tokens = []
     }
 
-    // Add mock balance for display (in a real app, this would come from wallet/blockchain data)
-    return tokens.map(token => ({
-      ...token,
-      balance: Math.random() * 1000 // Mock balance
-    }))
+    return tokens
   }
 
   const filteredTokens = getFilteredTokens()
@@ -127,49 +112,24 @@ export default function TokenSelectorContent({
     setSelectedProtocol(null)
   }
 
-  // Funzione per cambiare la chain sia nel selettore che in RainbowKit
-  const handleChainSelect = async (networkName: string) => {
-    setSelectedChain(networkName)
-
-    if (tokenSelector.type === 'input') {
-      const chainId = getChainId(networkName)
-      if (chainId && switchChain) {
-        try {
-          switchChain({ chainId })
-          updateInputNetwork(networkName)
-          console.log(`Switched to ${networkName} (Chain ID: ${chainId}) for input`)
-        } catch (error) {
-          console.error('Failed to switch chain:', error)
-        }
-      }
-    } else {
-      // Per output: aggiorna solo la rete di output (non RainbowKit)
-      updateOutputNetwork(networkName)
-      console.log(`Updated output network to ${networkName}`)
-    }
-  }
-
   const handleTokenSelect = (token: TokenOrDefiToken) => {
-    // Trova in quale network si trova questo token
-    const allNetworks = getAllNetworks()
-    let tokenNetwork = selectedChain // Default alla chain attualmente selezionata
-
-    // Cerca la rete del token selezionato
-    for (const network of allNetworks) {
-      const networkTokens = getTokensByChain(network.name)
-      if (networkTokens.some(t => t.symbol === token.symbol && t.address === token.address)) {
-        tokenNetwork = network.name
-        break
+    if (swapData.input.network !== selectedChain) {
+      if (tokenSelector.type === 'input') {
+        const chainId = getChainId(selectedChain)
+        if (chainId && switchChain) {
+          try {
+            switchChain({ chainId })
+            console.log(`Switched to ${selectedChain} (Chain ID: ${chainId}) for input`)
+          } catch (error) {
+            console.error('Failed to switch chain:', error)
+          }
+        }
+      } else {
+        console.log(`Updated output network to ${selectedChain}`)
       }
     }
 
-    // Se il token è da una rete diversa, cambia la rete automaticamente
-    if (tokenNetwork !== selectedChain) {
-      handleChainSelect(tokenNetwork)
-    }
-
-    // Utilizza la nuova azione che gestisce i conflitti di chain in advanced mode
-    selectTokenWithNetworkCheck(token, tokenNetwork, swapData.advancedMode)
+    selectTokenWithNetworkCheck(token, selectedChain, swapData.advancedMode)
   }
 
   return (
@@ -211,7 +171,7 @@ export default function TokenSelectorContent({
               {networks.map((network) => (
                 <button
                   key={network.name}
-                  onClick={() => handleChainSelect(network.name)}
+                  onClick={() => setSelectedChain(network.name)}
                   className={`flex-shrink-0 p-2 rounded-full border-2 transition-colors ${selectedChain === network.name ? "border-orange-500" : "border-zinc-700 hover:border-zinc-600"
                     }`}
                 >

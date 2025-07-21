@@ -36,7 +36,7 @@ export const useOrderHub = () => {
     getChainEid,
     getTokenBySymbol
   } = useConfig();
-  const { swapData } = useSwap();
+  const { swapData, selectedQuote } = useSwap();
   const sourceChainId = getChainId(swapData.input.network);
   const destinationChainId = getChainId(swapData.output.network);
   const destinationEid = getChainEid(swapData.output.network);
@@ -47,6 +47,9 @@ export const useOrderHub = () => {
     isValid: boolean;
     error?: string;
   } => {
+    if (!address) {
+      return { isValid: false, error: 'Please connect your wallet first' };
+    }
     if (!swapData.input.tokens.length || !swapData.output.tokens.length) {
       return { isValid: false, error: 'Input and output tokens are required' };
     }
@@ -99,6 +102,13 @@ export const useOrderHub = () => {
       };
     }
 
+    if (!selectedQuote) {
+      return {
+        isValid: false,
+        error: 'No quote selected for the swap'
+      };
+    }
+
     return { isValid: true };
   };
 
@@ -140,13 +150,14 @@ export const useOrderHub = () => {
 
   const approval = useApproval({
     tokens:
-      swapData.input.tokens.map((t) => {
+      swapData.input.tokens.flatMap((t) => {
         const token = getTokenBySymbol(swapData.input.network, t.symbol);
-        const parsedAmount = parseUnits(t.amount.toString(), token!.decimals);
-        return tokenToContractFormat(token!, parsedAmount);
+        if (!token) return [];
+        const parsedAmount = parseUnits(t.amount.toString(), token.decimals);
+        return [tokenToContractFormat(token, parsedAmount)];
       }) || [],
     spenderAddress: hubAddress,
-    chainId: getChainId(swapData.input.network)!
+    chainId: getChainId(swapData.input.network)
   });
 
   const createOrder = async () => {
@@ -184,22 +195,29 @@ export const useOrderHub = () => {
     if (estimatedBridgingFee === undefined) {
       throw new Error('Bridging fee not found');
     }
-    debugger;
 
-    const inputs: Token[] = swapData.input.tokens
-      .filter((t) => safeParseFloat(t.amount) > 0)
-      .map((t) => {
-        const token = getTokenBySymbol(swapData.input.network, t.symbol);
-        const parsedAmount = parseUnits(t.amount.toString(), token!.decimals);
-        return tokenToContractFormat(token!, parsedAmount);
-      });
+    const inputs: Token[] = swapData.input.tokens.flatMap((t) => {
+      if (safeParseFloat(t.amount) <= 0) {
+        return [];
+      }
+      const token = getTokenBySymbol(swapData.input.network, t.symbol);
+      if (!token) {
+        return [];
+      }
+      const parsedAmount = parseUnits(t.amount.toString(), token.decimals);
+      return [tokenToContractFormat(token, parsedAmount)];
+    });
 
-    const outputs: Token[] = swapData.output.tokens.map((t, index) => {
+    const outputs: Token[] = swapData.output.tokens.flatMap((t, index) => {
+      const token = getTokenBySymbol(swapData.output.network, t.symbol);
+      if (!token) {
+        return [];
+      }
       const percentage = swapData.outputPercentages[index] || 0;
       const amount = safeParseFloat(t.amount) * (percentage / 100);
-      const token = getTokenBySymbol(swapData.output.network, t.symbol);
-      const parsedAmount = parseUnits(amount.toString(), token!.decimals);
-      return tokenToContractFormat(token!, parsedAmount);
+
+      const parsedAmount = parseUnits(amount.toString(), token.decimals);
+      return [tokenToContractFormat(token, parsedAmount)];
     });
 
     const deadlineFillerGap = BigInt(3600); // 1 hour

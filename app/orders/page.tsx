@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAccount, usePublicClient, useWriteContract } from 'wagmi';
+import { useAccount, useChainId, usePublicClient, useWriteContract } from 'wagmi';
 import {
     Table,
     TableBody,
@@ -14,7 +14,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { orderHubAbi } from '@/lib/order-hub-abi';
-import { formatEther } from 'viem';
+import { Address, formatEther } from 'viem';
+import { useConfig } from '@/contexts/ConfigContext';
+import { eventNames } from 'process';
 
 interface OrderEvent {
     orderId: string;
@@ -41,21 +43,32 @@ interface OrderEvent {
     blockTimestamp: bigint;
 }
 
-const ORDER_HUB_ADDRESS = process.env.NEXT_PUBLIC_ORDER_HUB_ADDRESS as `0x${string}`;
-
 export default function OrdersPage() {
     const { address } = useAccount();
-    const publicClient = usePublicClient();
+    const chainId = useChainId();
+    const publicClient = usePublicClient({
+        chainId
+    });
     const { writeContractAsync } = useWriteContract();
     const [orders, setOrders] = useState<OrderEvent[]>([]);
     const [loading, setLoading] = useState(true);
     const [maxOrderDeadline, setMaxOrderDeadline] = useState<bigint>(BigInt(0));
     const [timeBuffer, setTimeBuffer] = useState<bigint>(BigInt(0));
+    const { getHubAddressByChainId } = useConfig();
+
+    const ORDER_HUB_ADDRESS = getHubAddressByChainId(chainId) as Address;
 
     useEffect(() => {
         if (!address || !publicClient) return;
 
         const fetchOrdersAndConfig = async () => {
+            debugger;
+            if (!ORDER_HUB_ADDRESS) {
+                console.error('Order Hub address not found for chain ID:', chainId);
+                setLoading(false);
+                return;
+            }
+
             try {
                 // Fetch contract configuration
                 const [maxDeadline, buffer] = await Promise.all([
@@ -74,61 +87,38 @@ export default function OrdersPage() {
                 setMaxOrderDeadline(maxDeadline as bigint);
                 setTimeBuffer(buffer as bigint);
 
-                // Get user's address as bytes32
-                const userBytes32 = `0x${address.slice(2).padStart(64, '0')}` as const;
+                // Get current timestamp
+                const currentBlock = await publicClient.getBlock();
 
                 // Fetch OrderCreated events for the user
-                const createdEvents = await publicClient.getLogs({
+                const createdEvents = await publicClient.getContractEvents({
                     address: ORDER_HUB_ADDRESS,
-                    event: {
-                        type: 'event',
-                        name: 'OrderCreated',
-                        inputs: [
-                            { name: 'orderId', type: 'bytes32', indexed: true },
-                            { name: 'nonce', type: 'uint64', indexed: false },
-                            { name: 'order', type: 'tuple', indexed: false },
-                            { name: 'caller', type: 'address', indexed: true },
-                        ],
-                    },
+                    abi: orderHubAbi,
+                    eventName: 'OrderCreated',
                     args: {
                         caller: address,
                     },
-                    fromBlock: 'earliest',
+
                 });
 
                 // Fetch OrderSettled events
-                const settledEvents = await publicClient.getLogs({
+                const settledEvents = await publicClient.getContractEvents({
+                    abi: orderHubAbi,
                     address: ORDER_HUB_ADDRESS,
-                    event: {
-                        type: 'event',
-                        name: 'OrderSettled',
-                        inputs: [
-                            { name: 'orderId', type: 'bytes32', indexed: true },
-                            { name: 'order', type: 'tuple', indexed: false },
-                        ],
-                    },
-                    fromBlock: 'earliest',
+                    eventName: 'OrderSettled',
                 });
 
                 // Fetch OrderWithdrawn events
-                const withdrawnEvents = await publicClient.getLogs({
+                const withdrawnEvents = await publicClient.getContractEvents({
+                    abi: orderHubAbi,
                     address: ORDER_HUB_ADDRESS,
-                    event: {
-                        type: 'event',
-                        name: 'OrderWithdrawn',
-                        inputs: [
-                            { name: 'orderId', type: 'bytes32', indexed: true },
-                            { name: 'caller', type: 'address', indexed: true },
-                        ],
-                    },
+                    eventName: 'OrderWithdrawn',
                     args: {
                         caller: address,
                     },
-                    fromBlock: 'earliest',
                 });
 
-                // Get current timestamp
-                const currentBlock = await publicClient.getBlock();
+
                 const now = currentBlock.timestamp;
 
                 // Process orders

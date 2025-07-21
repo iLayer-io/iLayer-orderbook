@@ -37,22 +37,6 @@ export default function CrossChainSwap() {
 
   const { getChainId } = useConfig()
 
-  const handleTokenSelect = (token: TokenOrDefiToken) => {
-    if (tokenSelector.type === "input") {
-      const newInputNetwork = swapData.output.network
-      const chainId = getChainId(newInputNetwork)
-      if (chainId && switchChain) {
-        try {
-          switchChain({ chainId })
-          console.log(`Switched to ${newInputNetwork} (Chain ID: ${chainId}) after invert`)
-          selectToken(token)
-        } catch (error) {
-          console.error('Failed to switch chain after invert:', error)
-        }
-      }
-    }
-  }
-
   const handleInvertSwap = async () => {
     const newInputNetwork = swapData.output.network
     const chainId = getChainId(newInputNetwork)
@@ -207,8 +191,6 @@ export default function CrossChainSwap() {
         isOpen={tokenSelector.isOpen}
         onClose={closeTokenSelector}
         title={tokenSelector.type === "input" ? "Exchange From" : "Exchange To"}
-        selectedToken={null}
-        onSelectToken={handleTokenSelect}
       />
     </div>
   )
