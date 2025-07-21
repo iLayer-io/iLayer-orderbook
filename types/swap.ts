@@ -67,6 +67,7 @@ export type Network = {
   decimals: number;
   icon: string;
   chainId: number;
+  chainEid?: number;
   contracts?: Contracts;
   tokens: Token[];
   defi: Defi[];

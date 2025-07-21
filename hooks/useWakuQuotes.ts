@@ -21,6 +21,13 @@ export function useWakuQuotes() {
   const { getTokenByChainAndAddress } = useConfig();
   const { getTokenBySymbol } = useConfig();
 
+  const mockEthTokenAmount = swapData.input.tokens.flatMap((t) => {
+    if (t.symbol === 'ETH') {
+      return [{ ...t, amount: safeParseFloat(t.amount) * 3838.33 }];
+    }
+    return [];
+  })[0].amount;
+
   // Usa il hook useWaku per gestire il nodo
   const {
     node,
@@ -169,7 +176,7 @@ export function useWakuQuotes() {
           })),
           outputTokens: response.to.tokens.map((token: any) => ({
             address: token.address,
-            amount: token.amount,
+            amount: mockEthTokenAmount, // TODO: remove mock
             symbol:
               getTokenByChainAndAddress(response.to.network, token.address)
                 ?.symbol || 'N/A'

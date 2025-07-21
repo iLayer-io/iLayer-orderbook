@@ -13,6 +13,7 @@ interface ConfigContextType {
     getTokenBySymbol: (networkName: string, symbol: string) => TokenOrDefiToken | undefined;
     getTokenByChainAndAddress: (networkName: string, address: string) => TokenOrDefiToken | undefined;
     getChainId: (networkName: string) => number | undefined;
+    getChainEid: (networkName: string) => number | undefined;
     // Metodi per supportare l'UI con le interfacce esistenti
     getAllTokens: () => (Token & { networkName: string; networkIcon: string })[];
     getAllNetworks: () => Network[];
@@ -22,6 +23,7 @@ interface ConfigContextType {
     searchDefiProtocols: (query: string) => (Defi & { networkName: string })[];
     getDefiProtocolByName: (protocolName: string) => (Defi & { networkName: string }) | undefined;
     getHubAddressByNetwork: (networkName: string) => string | null;
+    getRouterAddressByNetwork: (networkName: string) => string | null;
 }
 
 const ConfigContext = createContext<ConfigContextType | undefined>(undefined);
@@ -35,6 +37,12 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
         const network = config.find(n => n.name === networkName);
         return network?.contracts?.hub || null;
     };
+
+    const getRouterAddressByNetwork = (networkName: string): string | null => {
+        const network = config.find(n => n.name === networkName);
+        return network?.contracts?.router || null;
+    };
+
     const getNetworkByName = (name: string): Network | undefined => {
         return config.find(network => network.name === name);
     };
@@ -168,8 +176,16 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
         return network?.chainId;
     };
 
+    const getChainEid = (networkName: string): number | undefined => {
+        const network = getNetworkByName(networkName);
+        return network?.chainEid;
+    };
+
+
     const value: ConfigContextType = {
         networks: config,
+        getChainEid,
+        getRouterAddressByNetwork,
         getHubAddressByNetwork,
         getNetworkByName,
         getTokensByNetwork,

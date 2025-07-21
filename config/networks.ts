@@ -95,6 +95,7 @@ export const config: Config = [
     decimals: 18,
     icon: 'arbitrum.png',
     chainId: 42161,
+    chainEid: 30110,
     contracts: {
       hub: '0x5c9299F6FdE5d92Ee911e018b390838950435FAC',
       spoke: '0x6C6101a69C5dEC87Ccd4D2e14eDBCB34E7a81984',
@@ -238,6 +239,7 @@ export const config: Config = [
     decimals: 18,
     icon: 'base.png',
     chainId: 8453,
+    chainEid: 30184,
     contracts: {
       hub: '0x5c9299F6FdE5d92Ee911e018b390838950435FAC',
       spoke: '0x6C6101a69C5dEC87Ccd4D2e14eDBCB34E7a81984',
