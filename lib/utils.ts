@@ -17,7 +17,5 @@ export function formatNumber(value: bigint, decimals?: number): number {
   return parseFloat(formatUnits(value, decimals));
 }
 
-const isGhPages = process.env.DEPLOY_TARGET === 'gh-pages';
-const isProd = process.env.NODE_ENV === 'production';
 const repo = 'iLayer-orderbook';
-export const baseUrl = isGhPages && isProd ? `/${repo}` : '';
+export const baseUrl = `/${repo}`;
