@@ -54,7 +54,7 @@ export const useOrderHub = () => {
   // Helper function to create LayerZero payload like the Solidity function
   const getCreationLzData = () => {
     const options = Options.newOptions()
-      .addExecutorLzReceiveOption(1e8, 0)
+      .addExecutorLzReceiveOption(2000000, 0)
       .toHex();
 
     // Encode payload: abi.encode(bytes32(0)) then abi.encode(address(1), payload)
