@@ -6,11 +6,19 @@ import {
   useChainId,
   useSignTypedData,
   useReadContract,
-  useBlock
+  useBlock,
+  useClient,
+  useWalletClient,
+  usePublicClient
 } from 'wagmi';
 import { Options } from '@layerzerolabs/lz-v2-utilities';
 import { routerAbi } from '@/lib/router-abi';
-import { Address, parseUnits } from 'viem';
+import {
+  Address,
+  parseUnits,
+  encodeAbiParameters,
+  parseAbiParameters
+} from 'viem';
 import { orderHubAbi } from '@/lib/order-hub-abi';
 import { useConfig } from '@/contexts/ConfigContext';
 import {
@@ -36,12 +44,34 @@ export const useOrderHub = () => {
     getChainEid,
     getTokenBySymbol
   } = useConfig();
+  const client = usePublicClient();
   const { swapData, selectedQuote } = useSwap();
   const sourceChainId = getChainId(swapData.input.network);
   const destinationChainId = getChainId(swapData.output.network);
   const destinationEid = getChainEid(swapData.output.network);
   const hubAddress = getHubAddressByNetwork(swapData.input.network);
   const routerAddress = getRouterAddressByNetwork(swapData.input.network);
+
+  // Helper function to create LayerZero payload like the Solidity function
+  const getCreationLzData = () => {
+    const options = Options.newOptions()
+      .addExecutorLzReceiveOption(1e8, 0)
+      .toHex();
+
+    // Encode payload: abi.encode(bytes32(0)) then abi.encode(address(1), payload)
+    const randomBytes32 =
+      '0x0000000000000000000000000000000000000000000000000000000000000000';
+    const innerPayload = encodeAbiParameters(parseAbiParameters('bytes32'), [
+      randomBytes32
+    ]);
+
+    const payload = encodeAbiParameters(parseAbiParameters('address, bytes'), [
+      '0x0000000000000000000000000000000000000001',
+      innerPayload
+    ]);
+
+    return { payload, options };
+  };
 
   const validateOrderConfiguration = (): {
     isValid: boolean;
@@ -115,18 +145,23 @@ export const useOrderHub = () => {
   const { writeContractAsync, isPending, isError, error, isSuccess } =
     useWriteContract();
 
+  // Get the proper payload and options for LayerZero fee estimation
+  const lzData = destinationEid ? getCreationLzData() : null;
+
   const { data: estimatedBridgingFee } = useReadContract({
     address: routerAddress as Address,
     abi: routerAbi,
     functionName: 'estimateLzBridgingFee',
     chainId: sourceChainId,
-    args: [
-      destinationEid,
-      '0x',
-      Options.newOptions().addExecutorLzReceiveOption(1e5, 0).toHex()
-    ],
+    args: lzData
+      ? [destinationEid, lzData.payload, lzData.options]
+      : [0, '0x', '0x'],
     query: {
-      enabled: !!routerAddress && !!destinationEid
+      enabled:
+        !!routerAddress &&
+        !!destinationEid &&
+        !!lzData &&
+        sourceChainId !== destinationChainId
     }
   });
 
@@ -192,8 +227,16 @@ export const useOrderHub = () => {
       throw new Error('Contract nonce not available');
     }
 
-    if (estimatedBridgingFee === undefined) {
-      throw new Error('Bridging fee not found');
+    // For cross-chain swaps, bridging fee is required
+    if (sourceChainId !== destinationChainId) {
+      if (estimatedBridgingFee === undefined) {
+        throw new Error('Bridging fee not found for cross-chain swap');
+      }
+      if (!destinationEid) {
+        throw new Error(
+          `Cross-chain swap not supported: ${swapData.output.network} network does not have LayerZero endpoint configured`
+        );
+      }
     }
 
     const inputs: Token[] = swapData.input.tokens.flatMap((t) => {
@@ -240,27 +283,34 @@ export const useOrderHub = () => {
     );
 
     try {
-      // Add bridging fee to native value like backend (add bridging fee)
+      // Calculate native value: sum of native token inputs + bridging fee (if cross-chain)
       const totalValue = orderRequest.order.inputs
         .filter((input) => input.tokenType === TokenType.NATIVE)
         .reduce((total, input) => total + input.amount, BigInt(0));
 
-      const nativeValue = totalValue + (estimatedBridgingFee as bigint);
+      const nativeValue =
+        sourceChainId !== destinationChainId
+          ? totalValue + (estimatedBridgingFee as bigint)
+          : totalValue;
 
       console.log('Creating order with:', {
         hubAddress,
         sourceChainId,
         destinationChainId: getChainId(swapData.output.network),
         currentChainId: chainId,
+        destinationEid,
+        lzPayload: lzData?.payload,
+        lzOptions: lzData?.options,
+        estimatedBridgingFee: estimatedBridgingFee?.toString(),
         inputs: orderRequest.order.inputs.map((i) => ({
           type: i.tokenType,
           address: i.tokenAddress,
           amount: i.amount.toString()
         })),
-        // bridgingFee: bridgingFee?.toString(),
         totalValue: totalValue.toString(),
-        nativeValue,
-        nonce: orderRequest.nonce.toString()
+        nativeValue: nativeValue.toString(),
+        nonce: orderRequest.nonce.toString(),
+        bridgeSelector: sourceChainId !== destinationChainId ? 1 : 0
       });
 
       const message = {
@@ -290,8 +340,17 @@ export const useOrderHub = () => {
         permits, // permits array (now properly sized
         signature, // EIP-712 signature
         sourceChainId !== destinationChainId ? 1 : 0,
-        '0x' // extra data
+        sourceChainId !== destinationChainId ? lzData?.options || '0x' : '0x'
       ];
+
+      await client?.estimateContractGas({
+        address: hubAddress as Address,
+        abi: orderHubAbi,
+        functionName: 'createOrder',
+        args,
+        value: nativeValue,
+        account: address as Address
+      });
 
       await writeContractAsync({
         chainId: sourceChainId,
