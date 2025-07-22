@@ -44,7 +44,6 @@ export const useOrderHub = () => {
     getChainEid,
     getTokenBySymbol
   } = useConfig();
-  const client = usePublicClient();
   const { swapData, selectedQuote } = useSwap();
   const sourceChainId = getChainId(swapData.input.network);
   const destinationChainId = getChainId(swapData.output.network);
@@ -342,15 +341,6 @@ export const useOrderHub = () => {
         sourceChainId !== destinationChainId ? 1 : 0,
         sourceChainId !== destinationChainId ? lzData?.options || '0x' : '0x'
       ];
-
-      await client?.estimateContractGas({
-        address: hubAddress as Address,
-        abi: orderHubAbi,
-        functionName: 'createOrder',
-        args,
-        value: nativeValue,
-        account: address as Address
-      });
 
       await writeContractAsync({
         chainId: sourceChainId,
