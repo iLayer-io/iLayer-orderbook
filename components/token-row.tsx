@@ -47,7 +47,19 @@ export default function TokenRow({
 
 
     const handleUpdatePercentage = (e: React.ChangeEvent<HTMLInputElement>) => {
-        onUpdatePercentage?.(index, e.target.value)
+        const value = e.target.value;
+
+        // Allow empty input for better UX while typing
+        if (value === '') {
+            onUpdatePercentage?.(index, '0');
+            return;
+        }
+
+        // Parse and validate the input
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= 100) {
+            onUpdatePercentage?.(index, value);
+        }
     }
 
     return (
@@ -95,9 +107,9 @@ export default function TokenRow({
                         step="1"
                         value={percentage}
                         onChange={handleUpdatePercentage}
-                        className="bg-transparent text-left text-lg font-medium border-none focus-visible:outline-none"
+                        className="bg-transparent text-center text-lg font-medium border border-zinc-700 rounded w-16 h-8"
                     />
-                    <span className="text-xs text-gray-400 mt-1">%</span>
+                    <div className="text-xs text-gray-400 mt-1">%</div>
                 </div>
             )}
 

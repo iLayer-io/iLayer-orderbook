@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-center bg-no-repeat bg-[url('/iLayer-orderbook/background-wide.svg')] bg-cover`}>
+      <body className={`${inter.className} bg-center bg-no-repeat min-h-screen `}>
         <Providers>
           <div className="min-h-screen flex flex-col">
             <header className="py-4">

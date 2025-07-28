@@ -8,6 +8,12 @@ import {
     Quote,
     SettingsState,
 } from '../types/swap';
+import {
+    adjustPercentagesToSum100,
+    redistributePercentagesOnRemoval,
+    calculateNewTokenPercentage,
+    ensureValidPercentages
+} from '../lib/percentage';
 
 // Estendi le azioni del reducer
 type SwapAction =
@@ -143,10 +149,15 @@ const swapReducer = (
 
         case 'UPDATE_OUTPUT_PERCENTAGES':
             const { index, percentage } = action.payload;
+            const newPercentage = parseFloat(percentage) || 0;
+
             return {
                 ...state,
-                outputPercentages: state.outputPercentages.map((p, i) =>
-                    i === index ? percentage : p
+                outputPercentages: adjustPercentagesToSum100(
+                    state.outputPercentages,
+                    index,
+                    newPercentage,
+                    state.output.tokens.length
                 ),
             };
 
@@ -313,13 +324,18 @@ const swapReducer = (
             };
 
         case 'ADD_OUTPUT_TOKEN':
+            const newTokenPercentage = calculateNewTokenPercentage(
+                state.outputPercentages,
+                state.output.tokens.length
+            );
+
             return {
                 ...state,
                 output: {
                     ...state.output,
                     tokens: [...state.output.tokens, { symbol: '', amount: '' }]
                 },
-                outputPercentages: [...state.outputPercentages, '']
+                outputPercentages: [...state.outputPercentages, newTokenPercentage.toString()]
             };
 
         case 'REMOVE_INPUT_TOKEN':
@@ -332,20 +348,38 @@ const swapReducer = (
             };
 
         case 'REMOVE_OUTPUT_TOKEN':
+            const tokenIndex = parseInt(action.payload);
+            const remainingTokens = state.output.tokens.filter((_, index) => index !== tokenIndex);
+
             return {
                 ...state,
                 output: {
                     ...state.output,
-                    tokens: state.output.tokens.filter((_, index) => index.toString() !== action.payload)
+                    tokens: remainingTokens
                 },
-                outputPercentages: state.outputPercentages.filter((_, index) => index.toString() !== action.payload)
+                outputPercentages: redistributePercentagesOnRemoval(
+                    state.outputPercentages,
+                    tokenIndex,
+                    remainingTokens.length
+                )
             };
 
         case 'TOGGLE_ADVANCED_MODE':
             const newAdvancedMode = !state.advancedMode;
+            let newOutputPercentages = state.outputPercentages;
+
+            // When enabling advanced mode, ensure percentages sum to 100
+            if (newAdvancedMode && state.output.tokens.length > 1) {
+                newOutputPercentages = ensureValidPercentages(
+                    state.outputPercentages,
+                    state.output.tokens.length
+                );
+            }
+
             return {
                 ...state,
                 advancedMode: newAdvancedMode,
+                outputPercentages: newOutputPercentages,
                 // Keep only first token if disabling advanced mode
                 input: newAdvancedMode ? state.input : {
                     ...state.input,
