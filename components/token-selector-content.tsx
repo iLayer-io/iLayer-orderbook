@@ -232,7 +232,6 @@ export default function TokenSelectorContent({
                     <div className="font-medium">{token.symbol}</div>
                     <div className="text-sm text-gray-400">{token.name}</div>
                   </div>
-                //apr
                 </button>
               ))}
             </div>
