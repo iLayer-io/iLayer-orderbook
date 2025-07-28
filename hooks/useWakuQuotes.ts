@@ -198,7 +198,7 @@ export function useWakuQuotes(isValidOrder: (checkQuote?: boolean) => boolean) {
             to: response.to.network
           },
           // Campi calcolati per compatibilità
-          source: `Solver-${response.solver.substring(0, 8)}`,
+          //source: `Solver-${response.solver.substring(0, 8)}`,
           isError: false
         };
 
