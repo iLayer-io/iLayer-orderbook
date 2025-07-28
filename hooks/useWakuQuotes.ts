@@ -100,12 +100,12 @@ export function useWakuQuotes(isValidOrder: (checkQuote?: boolean) => boolean) {
 
   //const { encoder, decoder } = useContentPair();
 
-  const contentTopic = '/iLayer/1/rfq/proto';
+  const contentTopic = '/ilayer/1/rfq/proto';
   const { encoder, decoder } = useMemo(() => {
     let customTopic = contentTopic;
     if (address) {
-      const wakuFriendlyAddress = pad(address, { size: 32 });
-      customTopic = `/iLayer/${wakuFriendlyAddress}/rfq/proto`;
+      const wakuFriendlyAddress = pad(address, { size: 32 }).toLowerCase();
+      customTopic = `/ilayer/${wakuFriendlyAddress}/rfq/proto`;
       console.log('Using custom topic:', customTopic);
     }
     return {
