@@ -7,6 +7,7 @@ import { getRequestType, getResponseType } from '@/config/waku';
 import { safeParseFloat } from '@/lib/utils';
 import { Quote } from '@/types/swap';
 import { useAccount } from 'wagmi';
+import { pad } from 'viem';
 
 export const AUTO_REFRESH_INTERVAL = 60000; // 60 secondi
 const QUOTE_TIMEOUT = 2000; // 2 secondi per ascoltare i messaggi
@@ -23,6 +24,7 @@ export function useWakuQuotes(isValidOrder: (checkQuote?: boolean) => boolean) {
     error: wakuError,
     isLoading: wakuLoading
   } = useWaku<LightNode>();
+  const { address } = useAccount();
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isFetching, setIsFetching] = useState<boolean>(false);
@@ -100,13 +102,19 @@ export function useWakuQuotes(isValidOrder: (checkQuote?: boolean) => boolean) {
 
   const contentTopic = '/iLayer/1/rfq/proto';
   const { encoder, decoder } = useMemo(() => {
+    let customTopic = contentTopic;
+    if (address) {
+      const wakuFriendlyAddress = pad(address, { size: 32 });
+      customTopic = `/iLayer/${wakuFriendlyAddress}/rfq/proto`;
+      console.log('Using custom topic:', customTopic);
+    }
     return {
       encoder: createEncoder({
         contentTopic
       }),
-      decoder: createDecoder(contentTopic)
+      decoder: createDecoder(customTopic)
     };
-  }, [contentTopic]);
+  }, [contentTopic, address]);
 
   // Usa useLightPush per inviare messaggi
   const { push } = useLightPush({ node, encoder });
