@@ -16,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-center bg-no-repeat bg-black bg-[radial-gradient(circle_at_center,_rgba(153,27,27,0.2)_0%,_black_80%)]`}>
+      <body className={`${inter.className} bg-center bg-no-repeat bg-[url('/background-wide.jpeg')] bg-cover`}>
         <Providers>
           <div className="min-h-screen flex flex-col">
             <header className="py-4">
@@ -39,7 +39,7 @@ export default function RootLayout({
                 />
               </div>
             </header>
-            <main className="flex-1">{children}</main>
+            <main className="flex flex-col">{children}</main>
           </div>
         </Providers>
       </body >

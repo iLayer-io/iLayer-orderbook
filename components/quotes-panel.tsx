@@ -6,10 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import RouteCard from "./route-card";
 import { AUTO_REFRESH_INTERVAL, MAX_QUOTES, useWakuQuotes } from "@/hooks/useWakuQuotes";
 import { Progress } from "./ui/progress";
+import { useOrderHub } from "@/hooks/useOrderHub";
 
 export default function QuotesPanel() {
-    const { quotes, isFetching, hasZeroAmountInput, wakuInitialized, selectedQuote, countdown, handleSelectQuote, refreshQuotes } = useWakuQuotes();
-
+    const { isValidOrder } = useOrderHub()
+    const { quotes, isFetching, hasZeroAmountInput, wakuInitialized, selectedQuote, countdown, handleSelectQuote, refreshQuotes } = useWakuQuotes(isValidOrder);
 
     return (
         <div className="flex flex-col">
@@ -43,16 +44,16 @@ export default function QuotesPanel() {
                             Array.from({ length: MAX_QUOTES }).map((_, idx) => (
                                 <Skeleton key={idx} className="h-32 w-full bg-zinc-800" />
                             ))
-                        ) : quotes.length === 0 && !hasZeroAmountInput ? (
+                        ) : !isValidOrder(false) || (quotes.length === 0 && !hasZeroAmountInput) ? (
                             // No quotes available
                             <div className="text-center py-8 text-gray-400">
                                 <p className="text-sm">No routes available. Try adjusting your token selection or amounts.</p>
                             </div>
                         ) : (
                             // Actual quotes
-                            quotes.map((quote) => (
+                            quotes.map((quote, index) => (
                                 <RouteCard
-                                    key={quote.id}
+                                    key={quote.id + index}
                                     route={quote}
                                     isSelected={selectedQuote?.id === quote.id}
                                     onSelect={handleSelectQuote}

@@ -1,22 +1,18 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
-import {
-  useWaku,
-  useLightPush,
-  useFilterMessages,
-  useContentPair
-} from '@waku/react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { useWaku, useLightPush, useFilterMessages } from '@waku/react';
 import { useSwap } from '@/contexts/SwapContext';
 import { useConfig } from '@/contexts/ConfigContext';
-import { LightNode } from '@waku/sdk';
+import { createDecoder, createEncoder, LightNode } from '@waku/sdk';
 import { getRequestType, getResponseType } from '@/config/waku';
 import { safeParseFloat } from '@/lib/utils';
 import { Quote } from '@/types/swap';
+import { useAccount } from 'wagmi';
 
 export const AUTO_REFRESH_INTERVAL = 60000; // 60 secondi
 const QUOTE_TIMEOUT = 2000; // 2 secondi per ascoltare i messaggi
 export const MAX_QUOTES = 3; // Limite massimo di quote da mostrare
 
-export function useWakuQuotes() {
+export function useWakuQuotes(isValidOrder: (checkQuote?: boolean) => boolean) {
   const { swapData, setSelectedQuote, updateOutputAmount } = useSwap();
   const { getTokenByChainAndAddress } = useConfig();
   const { getTokenBySymbol } = useConfig();
@@ -72,11 +68,13 @@ export function useWakuQuotes() {
               );
               return token;
             })
-            .map((tokenWithAmount) => ({
-              symbol: tokenWithAmount.symbol
+            .map((tokenWithAmount, index) => ({
+              symbol: tokenWithAmount.symbol,
+              percentage: swapData.outputPercentages[index] || 0
             }))
             .sort((a, b) => a.symbol.localeCompare(b.symbol)) // Ordina per consistenza
-        }
+        },
+        advancedMode: swapData.advancedMode
       };
 
       return JSON.stringify(inputData);
@@ -89,6 +87,8 @@ export function useWakuQuotes() {
     swapData.input.tokens,
     swapData.output.network,
     swapData.output.tokens,
+    swapData.outputPercentages,
+    swapData.advancedMode,
     getTokenBySymbol
   ]);
 
@@ -96,7 +96,17 @@ export function useWakuQuotes() {
   const currentInputTokensId = generateInputTokensId();
   const prevInputTokensIdRef = useRef<string>('');
 
-  const { encoder, decoder } = useContentPair();
+  //const { encoder, decoder } = useContentPair();
+
+  const contentTopic = '/iLayer/1/rfq/proto';
+  const { encoder, decoder } = useMemo(() => {
+    return {
+      encoder: createEncoder({
+        contentTopic
+      }),
+      decoder: createDecoder(contentTopic)
+    };
+  }, [contentTopic]);
 
   // Usa useLightPush per inviare messaggi
   const { push } = useLightPush({ node, encoder });
@@ -159,7 +169,6 @@ export function useWakuQuotes() {
 
         const quote: Quote = {
           id: generateInputTokensId() + `-${index}`,
-          solver: response.solver,
           inputTokens: response.from.tokens.map((token: any) => ({
             address: token.address,
             amount: token.amount,
@@ -167,30 +176,10 @@ export function useWakuQuotes() {
               getTokenByChainAndAddress(response.from.network, token.address)
                 ?.symbol || 'N/A'
           })),
-          outputTokens: response.to.tokens.map((token: any, index: number) => {
-            // TODO: remove mock
-            const mockedUSDAmounts = swapData.input.tokens.flatMap((t) => {
-              let mockedAmount;
-              const inputTokenAmount = safeParseFloat(t.amount);
-              switch (t.symbol) {
-                case 'ETH': {
-                  mockedAmount = inputTokenAmount * 3838.33;
-                  break;
-                }
-                case 'ARB': {
-                  mockedAmount = inputTokenAmount * 0.5088;
-                  break;
-                }
-                default:
-                  mockedAmount = 0;
-              }
-
-              return [mockedAmount];
-            });
-
+          outputTokens: response.to.tokens.map((token: any) => {
             return {
               address: token.address,
-              amount: mockedUSDAmounts[index],
+              amount: token.amount,
               symbol:
                 getTokenByChainAndAddress(response.to.network, token.address)
                   ?.symbol || 'N/A'
@@ -202,11 +191,7 @@ export function useWakuQuotes() {
           },
           // Campi calcolati per compatibilità
           source: `Solver-${response.solver.substring(0, 8)}`,
-          sourceLogo: '/default-solver-logo.png',
-          timeEstimate: '~30s',
-          isError: false,
-          isPositive: true,
-          isBest: false
+          isError: false
         };
 
         if (
@@ -236,40 +221,8 @@ export function useWakuQuotes() {
     });
 
     if (newQuotes.length > 0) {
-      // Calcola valori USD e ordina i quote
-      const quotesWithCalculations = newQuotes.map((quote, index) => {
-        const totalInputValue = quote.inputTokens.reduce(
-          (sum, token) => sum + token.amount,
-          0
-        );
-        const totalOutputValue = quote.outputTokens.reduce(
-          (sum, token) => sum + token.amount,
-          0
-        );
-
-        return {
-          ...quote,
-          inputValueUSD: totalInputValue.toString(),
-          outputValueUSD: totalOutputValue.toString(),
-          estimatedAfterGas: (totalOutputValue * 0.97).toString(), // Stima dopo gas
-          percentage: ((totalOutputValue / totalInputValue - 1) * 100).toFixed(
-            2
-          ),
-          isPositive: totalOutputValue >= totalInputValue
-        };
-      });
-
-      const sortedQuotes = quotesWithCalculations.sort(
-        (a, b) =>
-          safeParseFloat(b.outputValueUSD!) - safeParseFloat(a.outputValueUSD!)
-      );
-
-      if (sortedQuotes.length > 0) {
-        sortedQuotes[0].isBest = true;
-      }
-
       // Sovrascrive sempre la lista invece di accumulare
-      setQuotes(sortedQuotes);
+      setQuotes(newQuotes);
 
       // Pulisci il timeout dei messaggi se abbiamo ricevuto risposte
       if (messageTimeoutRef.current) {
@@ -308,8 +261,17 @@ export function useWakuQuotes() {
   }, [swapData.input.tokens, swapData.output.tokens, getTokenBySymbol]);
 
   const fetchQuotesFromWaku = useCallback(async () => {
+    if (!isValidOrder(false)) {
+      console.warn('Invalid order configuration, skipping quote fetch');
+      setQuotes([]);
+      setIsFetching(false);
+      return;
+    }
+
     if (!node || !push || wakuLoading) {
       console.log('Waku not ready for sending messages');
+      setQuotes([]);
+      setIsFetching(false);
       return;
     }
 
@@ -366,10 +328,10 @@ export function useWakuQuotes() {
               swapData.output.network,
               tokenWithAmount.symbol
             );
-            const percentage = swapData.outputPercentages[index] || 0;
+            const percentage = swapData.outputPercentages[index] || '0';
             return {
               address: token?.address || '',
-              weight: Math.floor(percentage) // Converti la percentuale in peso int32
+              weight: Math.floor(safeParseFloat(percentage))
             };
           })
         }
@@ -411,27 +373,33 @@ export function useWakuQuotes() {
       setSelectedQuote(quote);
 
       // Aggiorna gli output amounts basandosi sui token address della risposta
-      quote.outputTokens.forEach((quoteToken, index) => {
-        const outputToken = swapData.output.tokens[index];
-        if (outputToken) {
-          // Trova il token corrispondente per symbol usando l'address
-          const tokenByAddress = getTokenBySymbol(
-            swapData.output.network,
-            outputToken.symbol
-          );
-          if (tokenByAddress && tokenByAddress.address === quoteToken.address) {
-            updateOutputAmount(
-              outputToken.symbol,
-              quoteToken.amount.toString()
+      quote.outputTokens.forEach((quoteToken) => {
+        // Trova il token corrispondente nel nostro swapData
+        const matchingTokenIndex = swapData.output.tokens.findIndex(
+          (outputToken) => {
+            const tokenBySymbol = getTokenBySymbol(
+              swapData.output.network,
+              outputToken.symbol
             );
-            console.log(
-              `Updated ${outputToken.symbol} to ${quoteToken.amount}`
+            return (
+              tokenBySymbol && tokenBySymbol.address === quoteToken.address
             );
           }
+        );
+
+        if (matchingTokenIndex !== -1) {
+          const outputToken = swapData.output.tokens[matchingTokenIndex];
+          updateOutputAmount(outputToken.symbol, quoteToken.amount.toString());
+          console.log(`Updated ${outputToken.symbol} to ${quoteToken.amount}`);
         }
       });
     },
-    [swapData.output.tokens, updateOutputAmount, getTokenBySymbol]
+    [
+      swapData.output.tokens,
+      updateOutputAmount,
+      getTokenBySymbol,
+      setSelectedQuote
+    ]
   );
 
   const refreshQuotes = useCallback(() => {

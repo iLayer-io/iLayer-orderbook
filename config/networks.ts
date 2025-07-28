@@ -7,6 +7,7 @@ export const config: Config = [
     decimals: 18,
     icon: 'ethereum.png',
     chainId: 1,
+    explorerUrl: 'https://etherscan.io',
     contracts: {
       hub: null,
       spoke: null,
@@ -96,6 +97,7 @@ export const config: Config = [
     icon: 'arbitrum.png',
     chainId: 42161,
     chainEid: 30110,
+    explorerUrl: 'https://arbiscan.io',
     contracts: {
       hub: '0x5c9299F6FdE5d92Ee911e018b390838950435FAC',
       spoke: '0x6C6101a69C5dEC87Ccd4D2e14eDBCB34E7a81984',
@@ -192,6 +194,7 @@ export const config: Config = [
     decimals: 18,
     icon: 'optimism.png',
     chainId: 10,
+    explorerUrl: 'https://optimistic.etherscan.io',
     contracts: {
       hub: null,
       spoke: null,
@@ -240,6 +243,7 @@ export const config: Config = [
     icon: 'base.png',
     chainId: 8453,
     chainEid: 30184,
+    explorerUrl: 'https://basescan.org',
     contracts: {
       hub: '0x5c9299F6FdE5d92Ee911e018b390838950435FAC',
       spoke: '0x6C6101a69C5dEC87Ccd4D2e14eDBCB34E7a81984',
@@ -249,7 +253,7 @@ export const config: Config = [
       {
         name: 'Ethereum',
         symbol: 'ETH',
-        address: '0x0000000000000000000000000000000000000002',
+        address: '0x0000000000000000000000000000000000000000',
         decimals: 18,
         icon: 'eth.webp',
         coingeckoId: 'ethereum'
@@ -257,7 +261,7 @@ export const config: Config = [
       {
         name: 'Tether USD',
         symbol: 'USDT',
-        address: '0x0000000000000000000000000000000000000003',
+        address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
         decimals: 18,
         icon: 'usdt.webp',
         coingeckoId: 'tether'
@@ -265,7 +269,7 @@ export const config: Config = [
       {
         name: 'USD Coin',
         symbol: 'USDC',
-        address: '0x0000000000000000000000000000000000000004',
+        address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
         decimals: 18,
         icon: 'usdc.webp',
         coingeckoId: 'usd-coin'
@@ -328,6 +332,7 @@ export const config: Config = [
     decimals: 18,
     icon: 'polygon.png',
     chainId: 137,
+    explorerUrl: 'https://polygonscan.com',
     contracts: {
       hub: null,
       spoke: null,
@@ -424,6 +429,7 @@ export const config: Config = [
     decimals: 18,
     icon: 'avalanche.png',
     chainId: 43114,
+    explorerUrl: 'https://snowtrace.io',
     contracts: {
       hub: null,
       spoke: null,

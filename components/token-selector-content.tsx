@@ -13,6 +13,7 @@ import { useSwap } from "@/contexts/SwapContext"
 import { useSwitchChain } from "wagmi"
 import { DialogTitle } from "./ui/dialog"
 import { baseUrl } from "@/lib/utils"
+import { TokenBalanceSelector } from "./token-balance-selector"
 
 interface TokenSelectorContentProps {
   title: string
@@ -231,6 +232,7 @@ export default function TokenSelectorContent({
                     <div className="font-medium">{token.symbol}</div>
                     <div className="text-sm text-gray-400">{token.name}</div>
                   </div>
+                //apr
                 </button>
               ))}
             </div>
@@ -258,6 +260,10 @@ export default function TokenSelectorContent({
                       <div className="text-sm text-gray-400">{token.name}</div>
                       <div className="text-xs text-gray-400">{token.networkName}</div>
                     </div>
+                    <TokenBalanceSelector
+                      network={token.networkName}
+                      tokenSymbol={token.symbol}
+                    />
                   </button>
                 ))}
               </div>

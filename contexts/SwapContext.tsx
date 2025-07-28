@@ -6,6 +6,7 @@ import {
     SwapContextProps,
     TokenOrDefiToken,
     Quote,
+    SettingsState,
 } from '../types/swap';
 
 // Estendi le azioni del reducer
@@ -16,7 +17,7 @@ type SwapAction =
     | { type: 'UPDATE_OUTPUT_TOKENS'; payload: TokenOrDefiToken[] }
     | { type: 'UPDATE_INPUT_AMOUNT'; payload: { symbol: string; amount: string } }
     | { type: 'UPDATE_OUTPUT_AMOUNT'; payload: { symbol: string; amount: string } }
-    | { type: 'UPDATE_OUTPUT_PERCENTAGES'; payload: number[] }
+    | { type: 'UPDATE_OUTPUT_PERCENTAGES'; payload: { index: number; percentage: string } }
     | { type: 'INVERT_SWAP' }
     | { type: 'TOGGLE_ADVANCED_MODE' }
     | { type: 'OPEN_TOKEN_SELECTOR'; payload: { type: 'input' | 'output'; tokenId: string } }
@@ -35,7 +36,10 @@ type SwapAction =
     | { type: 'UPDATE_OUTPUT_TOKEN_AMOUNT'; payload: { tokenId: string; amount: string } }
     | { type: 'SET_QUOTES'; payload: Quote[] }
     | { type: 'SET_SELECTED_QUOTE'; payload: Quote | null }
-    | { type: 'SET_IS_FETCHING_QUOTES'; payload: boolean };
+    | { type: 'SET_IS_FETCHING_QUOTES'; payload: boolean }
+    | { type: 'OPEN_SETTINGS' }
+    | { type: 'CLOSE_SETTINGS' }
+    | { type: 'UPDATE_SETTINGS'; payload: Partial<SettingsState> };
 
 // Estendi lo stato iniziale
 const initialState: SwapState & {
@@ -48,22 +52,23 @@ const initialState: SwapState & {
         activeTab: 'token' | 'defi';
         selectedProtocol: string | null;
     };
+    settings: SettingsState & { isOpen: boolean };
 } = {
     input: {
         network: 'Arbitrum',
         tokens: [{
             symbol: 'ETH',
-            amount: '0'
+            amount: ''
         }],
     },
     output: {
         network: 'Arbitrum',
         tokens: [{
             symbol: 'USDT',
-            amount: '0'
+            amount: ''
         }],
     },
-    outputPercentages: [100],
+    outputPercentages: ['100'],
     advancedMode: false,
     selectedQuote: null,
     tokenSelector: {
@@ -73,6 +78,15 @@ const initialState: SwapState & {
         searchQuery: '',
         activeTab: 'token',
         selectedProtocol: null,
+    },
+    settings: {
+        isOpen: false,
+        swapDeadline: undefined,
+        customRecipient: undefined,
+        enableHook: false,
+        hookTarget: undefined,
+        gasLimit: 21000,
+        calldata: undefined,
     },
 };
 
@@ -87,7 +101,7 @@ const swapReducer = (
                 ...state,
                 input: {
                     ...state.input,
-                    tokens: action.payload.map(token => ({ symbol: token.symbol, amount: '0' })),
+                    tokens: action.payload.map(token => ({ symbol: token.symbol, amount: '' })),
                 },
             };
 
@@ -96,7 +110,7 @@ const swapReducer = (
                 ...state,
                 output: {
                     ...state.output,
-                    tokens: action.payload.map(token => ({ symbol: token.symbol, amount: '0' })),
+                    tokens: action.payload.map(token => ({ symbol: token.symbol, amount: '' })),
                 },
                 outputPercentages: new Array(action.payload.length).fill(0),
             };
@@ -128,9 +142,12 @@ const swapReducer = (
             };
 
         case 'UPDATE_OUTPUT_PERCENTAGES':
+            const { index, percentage } = action.payload;
             return {
                 ...state,
-                outputPercentages: action.payload,
+                outputPercentages: state.outputPercentages.map((p, i) =>
+                    i === index ? percentage : p
+                ),
             };
 
         case 'INVERT_SWAP':
@@ -290,8 +307,9 @@ const swapReducer = (
                 ...state,
                 input: {
                     ...state.input,
-                    tokens: [...state.input.tokens, { symbol: '', amount: '0' }]
-                }
+                    tokens: [...state.input.tokens, { symbol: '', amount: '' }]
+                },
+
             };
 
         case 'ADD_OUTPUT_TOKEN':
@@ -299,8 +317,9 @@ const swapReducer = (
                 ...state,
                 output: {
                     ...state.output,
-                    tokens: [...state.output.tokens, { symbol: '', amount: '0' }]
-                }
+                    tokens: [...state.output.tokens, { symbol: '', amount: '' }]
+                },
+                outputPercentages: [...state.outputPercentages, '']
             };
 
         case 'REMOVE_INPUT_TOKEN':
@@ -318,7 +337,8 @@ const swapReducer = (
                 output: {
                     ...state.output,
                     tokens: state.output.tokens.filter((_, index) => index.toString() !== action.payload)
-                }
+                },
+                outputPercentages: state.outputPercentages.filter((_, index) => index.toString() !== action.payload)
             };
 
         case 'TOGGLE_ADVANCED_MODE':
@@ -369,6 +389,33 @@ const swapReducer = (
                 selectedQuote: action.payload,
             };
 
+        case 'OPEN_SETTINGS':
+            return {
+                ...state,
+                settings: {
+                    ...state.settings,
+                    isOpen: true,
+                },
+            };
+
+        case 'CLOSE_SETTINGS':
+            return {
+                ...state,
+                settings: {
+                    ...state.settings,
+                    isOpen: false,
+                },
+            };
+
+        case 'UPDATE_SETTINGS':
+            return {
+                ...state,
+                settings: {
+                    ...state.settings,
+                    ...action.payload,
+                },
+            };
+
         default:
             return state;
     }
@@ -400,8 +447,8 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
         dispatch({ type: 'UPDATE_OUTPUT_AMOUNT', payload: { symbol, amount } });
     };
 
-    const updateOutputPercentages = (percentages: number[]) => {
-        dispatch({ type: 'UPDATE_OUTPUT_PERCENTAGES', payload: percentages });
+    const updateOutputPercentages = (index: number, percentage: string) => {
+        dispatch({ type: 'UPDATE_OUTPUT_PERCENTAGES', payload: { index, percentage } });
     };
 
     const invertSwap = () => {
@@ -472,6 +519,18 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
         dispatch({ type: 'SET_SELECTED_QUOTE', payload: quote });
     };
 
+    const openSettings = () => {
+        dispatch({ type: 'OPEN_SETTINGS' });
+    };
+
+    const closeSettings = () => {
+        dispatch({ type: 'CLOSE_SETTINGS' });
+    };
+
+    const updateSettings = (settings: Partial<SettingsState>) => {
+        dispatch({ type: 'UPDATE_SETTINGS', payload: settings });
+    };
+
     const value: SwapContextProps = {
         swapData: {
             input: state.input,
@@ -505,6 +564,10 @@ export const SwapProvider: React.FC<SwapProviderProps> = ({ children }) => {
         removeOutputToken,
         updateInputTokenAmount,
         updateOutputTokenAmount,
+        settings: state.settings,
+        openSettings,
+        closeSettings,
+        updateSettings,
     };
 
     return <SwapContext.Provider value={value}>{children}</SwapContext.Provider>;

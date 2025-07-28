@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, CheckCircle, XCircle, Loader2, ArrowRight } from "lucide-react"
+import { ArrowLeft, CheckCircle, XCircle, Loader2, ArrowRight, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DrawerHeader, DrawerTitle } from "@/components/ui/drawer"
 import { DialogTitle } from "@/components/ui/dialog"
@@ -27,8 +27,8 @@ export default function TransactionModalContent({
 }: TransactionModalContentProps) {
     const [currentStep, setCurrentStep] = useState<TransactionStep>('details')
     const { swapData } = useSwap()
-    const { getTokenBySymbol } = useConfig()
-    const { createOrder, isPending, isError, error, isSuccess } = useOrderHub()
+    const { getTokenBySymbol, getExplorerUrl } = useConfig()
+    const { createOrder, isPending, isError, error, isSuccess, txHash } = useOrderHub()
     // Gestisci il cambio di stato automatico
     useEffect(() => {
         if (isPending && currentStep === 'details') {
@@ -158,35 +158,12 @@ export default function TransactionModalContent({
                 <Card className="bg-zinc-800 border-zinc-700 p-4">
                     <div className="flex justify-between items-center mb-3">
                         <h3 className="text-sm font-medium text-gray-400">Selected Route</h3>
-                        <span className="text-xs text-green-500">Best Route</span>
                     </div>
                     <div className="space-y-2">
                         <div className="flex justify-between text-sm">
                             <span className="text-gray-400">Provider</span>
                             <span className="font-medium">{selectedQuote.source}</span>
                         </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Estimated Time</span>
-                            <span className="font-medium">{selectedQuote.timeEstimate}</span>
-                        </div>
-                        {selectedQuote.percentage && (
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-400">Price Impact</span>
-                                <span className={`font-medium ${selectedQuote.isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                                    {selectedQuote.isPositive ? '+' : ''}{selectedQuote.percentage}%
-                                </span>
-                            </div>
-                        )}
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Output Value</span>
-                            <span className="font-medium">${selectedQuote.outputValueUSD}</span>
-                        </div>
-                        {selectedQuote.estimatedAfterGas && (
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-400">After Gas</span>
-                                <span className="font-medium">${selectedQuote.estimatedAfterGas}</span>
-                            </div>
-                        )}
                     </div>
                 </Card>
             )}            {/* Swap Button */}
@@ -210,6 +187,8 @@ export default function TransactionModalContent({
         </div>
     )
 
+    const isCrossChain = swapData.input.network !== swapData.output.network;
+
     const renderOutcomeStep = () => (
         <div className="p-8 flex flex-col items-center justify-center space-y-4">
             {isSuccess ? (
@@ -219,6 +198,47 @@ export default function TransactionModalContent({
                     <p className="text-sm text-gray-400 text-center">
                         Your swap has been processed successfully.
                     </p>
+
+                    {/* Explorer Links */}
+                    {txHash && (
+                        <div className="w-full space-y-3 mt-6">
+                            {/* Source Chain Explorer Link */}
+                            {(() => {
+                                const sourceExplorerUrl = getExplorerUrl(swapData.input.network);
+                                if (sourceExplorerUrl) {
+                                    return (
+                                        <a
+                                            href={`${sourceExplorerUrl}/tx/${txHash}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center justify-between w-full p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg border border-zinc-700 transition-colors"
+                                        >
+                                            <span className="text-sm text-gray-300">
+                                                View on {swapData.input.network} Explorer
+                                            </span>
+                                            <ExternalLink className="h-4 w-4 text-gray-400" />
+                                        </a>
+                                    );
+                                }
+                                return null;
+                            })()}
+
+                            {/* LayerZero Explorer Link for Cross-chain */}
+                            {isCrossChain && (
+                                <a
+                                    href={`https://layerzeroscan.com/tx/${txHash}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-between w-full p-3 bg-zinc-800 hover:bg-zinc-700 rounded-lg border border-zinc-700 transition-colors"
+                                >
+                                    <span className="text-sm text-gray-300">
+                                        View on LayerZero explorer
+                                    </span>
+                                    <ExternalLink className="h-4 w-4 text-gray-400" />
+                                </a>
+                            )}
+                        </div>
+                    )}
                 </>
             ) : (
                 <>
@@ -232,7 +252,7 @@ export default function TransactionModalContent({
 
             <Button
                 onClick={handleClose}
-                className="w-full py-3 bg-zinc-700 hover:bg-zinc-600 text-white font-medium"
+                className="w-full py-3 bg-zinc-700 hover:bg-zinc-600 text-white font-medium mt-6"
             >
                 Close
             </Button>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TokenBalance } from "@/components/token-balance"
+import { TokenUsd } from "@/components/token-usd"
 import { useConfig } from "@/contexts/ConfigContext"
 import { baseUrl, safeParseFloat } from "@/lib/utils"
 
@@ -17,9 +18,12 @@ interface TokenRowProps {
     wakuLoading: boolean
     showRemoveButton: boolean
     showBalance?: boolean
+    showUsd?: boolean
+    percentage?: string
     onTokenSelect: (index: number) => void
     onRemoveToken: (index: string) => void
     onUpdateAmount: (index: string, amount: string) => void
+    onUpdatePercentage?: (index: number, percentage: string) => void
 }
 
 export default function TokenRow({
@@ -27,15 +31,24 @@ export default function TokenRow({
     index,
     network,
     type,
+    advancedMode,
     showBalance,
+    showUsd,
     wakuLoading,
     showRemoveButton,
+    percentage,
     onTokenSelect,
     onRemoveToken,
-    onUpdateAmount
+    onUpdateAmount,
+    onUpdatePercentage
 }: TokenRowProps) {
     const { getTokenBySymbol } = useConfig()
     const token = getTokenBySymbol(network, tokenWithAmount.symbol)
+
+
+    const handleUpdatePercentage = (e: React.ChangeEvent<HTMLInputElement>) => {
+        onUpdatePercentage?.(index, e.target.value)
+    }
 
     return (
         <div className="flex items-center gap-4">
@@ -71,6 +84,23 @@ export default function TokenRow({
                 )}
             </button>
 
+            {/* Percentage input for output tokens in advanced mode */}
+            {advancedMode && type === 'output' && onUpdatePercentage && (
+                <div className="flex flex-col items-center">
+                    <Input
+                        type="number"
+                        placeholder="0"
+                        min={0}
+                        max={100}
+                        step="1"
+                        value={percentage}
+                        onChange={handleUpdatePercentage}
+                        className="bg-transparent text-left text-lg font-medium border-none focus-visible:outline-none"
+                    />
+                    <span className="text-xs text-gray-400 mt-1">%</span>
+                </div>
+            )}
+
             <div className="flex flex-col h-14 flex-1 justify-between min-w-0">
                 {wakuLoading && type === 'input' ? (
                     <Skeleton className="h-14 w-full bg-zinc-800" />
@@ -86,13 +116,24 @@ export default function TokenRow({
                             className="bg-transparent text-right text-lg font-medium border-none focus-visible:outline-none w-full"
                             readOnly={type === 'output'}
                         />
-                        {showBalance && (
-                            <TokenBalance
-                                network={network}
-                                tokenSymbol={tokenWithAmount.symbol}
-                                type={type}
-                            />
-                        )}
+                        <div className="flex justify-between items-end">
+                            {showBalance && (
+                                <TokenBalance
+                                    network={network}
+                                    tokenSymbol={tokenWithAmount.symbol}
+                                    type={type}
+                                />
+                            )}
+                            <div className="ml-auto">
+                                {showUsd && (
+                                    <TokenUsd
+                                        tokenSymbol={tokenWithAmount.symbol}
+                                        amount={tokenWithAmount.amount}
+                                        networkName={network}
+                                    />
+                                )}
+                            </div>
+                        </div>
                     </>
                 )}
             </div>

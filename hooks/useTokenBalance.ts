@@ -33,7 +33,8 @@ export function useTokenBalance({
   const {
     data: erc20Balance,
     isLoading: isLoadingERC20,
-    isError: isErrorERC20
+    isError: isErrorERC20,
+    error: err20
   } = useReadContract({
     address: token?.address as Address,
     abi: erc20Abi,
@@ -49,7 +50,8 @@ export function useTokenBalance({
   const {
     data: nativeBalance,
     isLoading: isLoadingNative,
-    isError: isErrorNative
+    isError: isErrorNative,
+    error: errNative
   } = useBalance({
     address: walletAddress,
     chainId,
@@ -68,7 +70,7 @@ export function useTokenBalance({
     }
 
     const numericBalance = formatNumber(rawBalance, decimals);
-    return numericBalance.toFixed(4); // Mostra 4 decimali
+    return numericBalance.toFixed(5); // Mostra 5 decimali
   }, [rawBalance, decimals, token?.symbol, chainId]);
 
   const balanceLabel = type === 'input' ? 'Balance' : 'Available';

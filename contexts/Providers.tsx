@@ -8,7 +8,7 @@ import { wagmiConfig } from '../config/wagmi';
 import { ConfigProvider } from './ConfigContext';
 import { SwapProvider } from './SwapContext';
 import { ThemeProvider } from '../components/theme-provider';
-import { ContentPairProvider, LightNodeProvider } from "@waku/react";
+import { LightNodeProvider } from "@waku/react";
 
 import '@rainbow-me/rainbowkit/styles.css';
 import { CONTENT_TOPIC, LIGHT_NODE_CONFIG } from '@/config/waku';
@@ -37,9 +37,9 @@ export const Providers: React.FC<ProvidersProps> = ({ children }) => {
                         <ConfigProvider>
                             <SwapProvider>
                                 <LightNodeProvider {...LIGHT_NODE_CONFIG}>
-                                    <ContentPairProvider contentTopic={CONTENT_TOPIC}>
-                                        {children}
-                                    </ContentPairProvider>
+                                    {/* <ContentPairProvider contentTopic={CONTENT_TOPIC}> */}
+                                    {children}
+                                    {/* </ContentPairProvider> */}
                                 </LightNodeProvider>
                             </SwapProvider>
                         </ConfigProvider>

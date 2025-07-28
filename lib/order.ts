@@ -63,18 +63,21 @@ export function tokenToContractFormat(
 
 export function prepareOrderRequest(
   user: Address,
+  recipient: Address,
+  callRecipient: Address,
   inputs: Token[],
   outputs: Token[],
   sourceChainId: number,
   destinationChainId: number,
   deadline: bigint,
   nonce: bigint,
+  callData: string = '0x',
   primaryFillerDeadline?: bigint
 ): OrderRequest {
   const paddedUserAddress = pad(user as `0x${string}`, { size: 32 });
-  const paddedRecipientAddress = paddedUserAddress; // Same as user for now
+  const paddedRecipientAddress = pad(recipient as `0x${string}`, { size: 32 });
   const paddedFillerAddress = paddedUserAddress; // Same as user for now
-  const paddedCallRecipient = paddedRecipientAddress;
+  const paddedCallRecipient = pad(callRecipient as `0x${string}`, { size: 32 });
 
   return {
     deadline,
@@ -97,7 +100,7 @@ export function prepareOrderRequest(
       primaryFillerDeadline: primaryFillerDeadline || deadline,
       deadline,
       callRecipient: paddedCallRecipient,
-      callData: '0x',
+      callData,
       callValue: BigInt(0)
     }
   };

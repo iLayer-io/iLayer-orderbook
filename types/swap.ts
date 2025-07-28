@@ -23,25 +23,15 @@ export type TokenOrDefiToken = Token | DefiToken;
 
 export interface Quote {
   id: string;
-  solver: string;
   inputTokens: { address: string; amount: number; symbol: string }[];
   outputTokens: { address: string; amount: number; symbol: string }[];
   network: {
     from: string;
     to: string;
   };
-  // Campi calcolati per compatibilità con l'UI esistente
-  inputValueUSD?: string;
-  outputValueUSD?: string;
-  estimatedAfterGas?: string;
-  percentage?: string;
-  isPositive?: boolean;
-  isBest?: boolean;
   isError?: boolean;
   errorMessage?: string;
   source?: string;
-  sourceLogo?: string;
-  timeEstimate?: string;
 }
 
 export interface TokenWithAmount {
@@ -64,6 +54,7 @@ export type Contracts = {
 export type Network = {
   name: string;
   nativeToken: string;
+  explorerUrl: string;
   decimals: number;
   icon: string;
   chainId: number;
@@ -95,9 +86,18 @@ export interface SwapData {
 export interface SwapState {
   input: SwapData;
   output: SwapData;
-  outputPercentages: number[];
+  outputPercentages: string[];
   advancedMode: boolean;
   selectedQuote: Quote | null;
+}
+
+export interface SettingsState {
+  swapDeadline?: string; // it's a timestamp in seconds
+  customRecipient?: Address;
+  enableHook: boolean;
+  hookTarget?: `0x${string}`;
+  gasLimit?: number;
+  calldata?: `0x${string}`;
 }
 
 export interface SwapContextProps {
@@ -106,7 +106,7 @@ export interface SwapContextProps {
   updateOutputTokens: (tokens: TokenOrDefiToken[]) => void;
   updateInputAmount: (symbol: string, amount: string) => void;
   updateOutputAmount: (symbol: string, amount: string) => void;
-  updateOutputPercentages: (percentages: number[]) => void;
+  updateOutputPercentages: (index: number, percentage: string) => void;
   invertSwap: () => void;
   advancedMode: boolean;
   toggleAdvancedMode: () => void;
@@ -139,4 +139,9 @@ export interface SwapContextProps {
   removeOutputToken: (tokenId: string) => void;
   updateInputTokenAmount: (tokenId: string, amount: string) => void;
   updateOutputTokenAmount: (tokenId: string, amount: string) => void;
+  // Settings state
+  settings: SettingsState & { isOpen: boolean };
+  openSettings: () => void;
+  closeSettings: () => void;
+  updateSettings: (settings: Partial<SettingsState>) => void;
 }

@@ -1,15 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import {
   useWriteContract,
   useAccount,
   useChainId,
   useSignTypedData,
   useReadContract,
-  useBlock,
-  useClient,
-  useWalletClient,
-  usePublicClient
+  useBlock
 } from 'wagmi';
 import { Options } from '@layerzerolabs/lz-v2-utilities';
 import { routerAbi } from '@/lib/router-abi';
@@ -35,6 +33,7 @@ import { useSwap } from '@/contexts/SwapContext';
 import { safeParseFloat } from '@/lib/utils';
 
 export const useOrderHub = () => {
+  const [txHash, setTxHash] = useState<string | null>(null);
   const { address } = useAccount();
   const chainId = useChainId();
   const {
@@ -44,7 +43,7 @@ export const useOrderHub = () => {
     getChainEid,
     getTokenBySymbol
   } = useConfig();
-  const { swapData, selectedQuote } = useSwap();
+  const { swapData, selectedQuote, settings } = useSwap();
   const sourceChainId = getChainId(swapData.input.network);
   const destinationChainId = getChainId(swapData.output.network);
   const destinationEid = getChainEid(swapData.output.network);
@@ -72,7 +71,9 @@ export const useOrderHub = () => {
     return { payload, options };
   };
 
-  const validateOrderConfiguration = (): {
+  const validateOrderConfiguration = (
+    checkQuote?: boolean
+  ): {
     isValid: boolean;
     error?: string;
   } => {
@@ -116,6 +117,37 @@ export const useOrderHub = () => {
       };
     }
 
+    // Validate percentages in advanced mode
+    if (swapData.advancedMode && swapData.output.tokens.length > 1) {
+      const totalPercentage = swapData.outputPercentages.reduce(
+        (sum, p) => sum + safeParseFloat(p),
+        0
+      );
+      if (totalPercentage !== 100) {
+        return {
+          isValid: false,
+          error: `Output percentages must sum to 100%. Currently: ${totalPercentage}%`
+        };
+      }
+
+      // Check if any percentage is 0 or negative
+      const hasInvalidPercentage = swapData.outputPercentages.some(
+        (p, index) => {
+          if (index < swapData.output.tokens.length) {
+            return !p || safeParseFloat(p) < 0;
+          }
+          return false;
+        }
+      );
+
+      if (hasInvalidPercentage) {
+        return {
+          isValid: false,
+          error: 'All output token percentages must be greater than 0%'
+        };
+      }
+    }
+
     const hubAddress = getHubAddressByNetwork(swapData.input.network);
     if (!hubAddress) {
       return {
@@ -131,7 +163,7 @@ export const useOrderHub = () => {
       };
     }
 
-    if (!selectedQuote) {
+    if (checkQuote && !selectedQuote) {
       return {
         isValid: false,
         error: 'No quote selected for the swap'
@@ -162,6 +194,12 @@ export const useOrderHub = () => {
         !!lzData &&
         sourceChainId !== destinationChainId
     }
+  });
+
+  const { data: maxOrderDeadline } = useReadContract({
+    address: hubAddress as Address,
+    abi: orderHubAbi,
+    functionName: 'maxOrderDeadline'
   });
 
   const { signTypedDataAsync } = useSignTypedData();
@@ -195,6 +233,9 @@ export const useOrderHub = () => {
   });
 
   const createOrder = async () => {
+    // Reset tx hash at the start of a new transaction
+    setTxHash(null);
+
     if (!address) {
       throw new Error('Please connect your wallet first');
     }
@@ -226,6 +267,10 @@ export const useOrderHub = () => {
       throw new Error('Contract nonce not available');
     }
 
+    if (maxOrderDeadline === undefined) {
+      throw new Error('Max order deadline not available');
+    }
+
     // For cross-chain swaps, bridging fee is required
     if (sourceChainId !== destinationChainId) {
       if (estimatedBridgingFee === undefined) {
@@ -255,30 +300,34 @@ export const useOrderHub = () => {
       if (!token) {
         return [];
       }
-      const percentage = swapData.outputPercentages[index] || 0;
-      const amount = safeParseFloat(t.amount) * (percentage / 100);
+      const percentage = swapData.outputPercentages[index] || '0';
+      const amount =
+        safeParseFloat(t.amount) * (safeParseFloat(percentage) / 100);
 
       const parsedAmount = parseUnits(amount.toString(), token.decimals);
       return [tokenToContractFormat(token, parsedAmount)];
     });
 
-    const deadlineFillerGap = BigInt(3600); // 1 hour
     const timestamp = latestBlock.timestamp;
-    const deadline = timestamp + BigInt(3) * deadlineFillerGap;
-    const primaryFillerDeadline = timestamp + BigInt(2) * deadlineFillerGap;
+    const deadline = settings.swapDeadline
+      ? timestamp + BigInt(settings.swapDeadline) * BigInt(60)
+      : timestamp + (maxOrderDeadline as bigint);
 
     // Use contract nonce + 1 like backend
     const nonce = (contractNonce as bigint) + BigInt(1);
 
     const orderRequest = prepareOrderRequest(
       address,
+      settings.customRecipient || address,
+      settings.hookTarget || '0x',
       inputs,
       outputs,
       sourceChainId,
       destinationChainId,
       deadline,
       nonce,
-      primaryFillerDeadline
+      settings.calldata || '0x',
+      deadline
     );
 
     try {
@@ -342,7 +391,7 @@ export const useOrderHub = () => {
         sourceChainId !== destinationChainId ? lzData?.options || '0x' : '0x'
       ];
 
-      await writeContractAsync({
+      const hash = await writeContractAsync({
         chainId: sourceChainId,
         address: hubAddress as Address,
         abi: orderHubAbi,
@@ -350,6 +399,9 @@ export const useOrderHub = () => {
         args,
         value: nativeValue
       });
+
+      // Store the transaction hash
+      setTxHash(hash);
     } catch (err) {
       console.error('Error creating order:', err);
       // Usa la funzione di traduzione degli errori
@@ -364,13 +416,14 @@ export const useOrderHub = () => {
     isError,
     error: error ? new Error(getErrorMessage(error)) : null,
     isSuccess,
+    txHash,
     approval,
-    isValidOrder: () => {
-      const validation = validateOrderConfiguration();
+    isValidOrder: (checkQuote = true) => {
+      const validation = validateOrderConfiguration(checkQuote);
       return validation.isValid;
     },
     getValidationError: () => {
-      const validation = validateOrderConfiguration();
+      const validation = validateOrderConfiguration(true);
       return validation.error || null;
     }
   };

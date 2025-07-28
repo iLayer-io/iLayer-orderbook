@@ -14,6 +14,8 @@ interface ConfigContextType {
     getTokenByChainAndAddress: (networkName: string, address: string) => TokenOrDefiToken | undefined;
     getChainId: (networkName: string) => number | undefined;
     getChainEid: (networkName: string) => number | undefined;
+    getCoingeckoId: (networkName: string, symbol: string) => string | undefined;
+    getExplorerUrl: (networkName: string) => string | undefined;
     // Metodi per supportare l'UI con le interfacce esistenti
     getAllTokens: () => (Token & { networkName: string; networkIcon: string })[];
     getAllNetworks: () => Network[];
@@ -106,6 +108,28 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
         }
 
         return undefined;
+    };
+
+    const getCoingeckoId = (networkName: string, symbol: string): string | undefined => {
+        const network = getNetworkByName(networkName);
+        if (!network) return undefined;
+
+        // First, look in regular tokens
+        const regularToken = network.tokens.find(token => token.symbol === symbol);
+        if (regularToken?.coingeckoId) return regularToken.coingeckoId;
+
+        // Then, look in DeFi tokens
+        for (const defiProtocol of network.defi) {
+            const defiToken = defiProtocol.tokens.find(token => token.symbol === symbol);
+            if (defiToken?.coingeckoId) return defiToken.coingeckoId;
+        }
+
+        return undefined;
+    };
+
+    const getExplorerUrl = (networkName: string): string | undefined => {
+        const network = getNetworkByName(networkName);
+        return network?.explorerUrl;
     };
 
     const getAllTokens = (): (Token & { networkName: string; networkIcon: string })[] => {
@@ -201,6 +225,8 @@ export const ConfigProvider: React.FC<ConfigProviderProps> = ({ children }) => {
         getTokenBySymbol,
         getTokenByChainAndAddress,
         getChainId,
+        getCoingeckoId,
+        getExplorerUrl,
         getAllTokens,
         getAllNetworks,
         getAllDefiProtocols,

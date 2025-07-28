@@ -1,19 +1,19 @@
 "use client"
 
-import { ArrowDown, Info, Plus } from "lucide-react"
+import { ArrowDown, Settings, Plus } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import ResponsiveTokenSelector from "@/components/responsive-token-selector"
 import TokenRow from "@/components/token-row"
 import SwapButton from "@/components/swap-button"
 import { useSwap } from "@/contexts/SwapContext"
-import type { TokenOrDefiToken } from "@/types/swap"
 import QuotesPanel from "./quotes-panel"
 import { useConfig } from "@/contexts/ConfigContext"
 import { useWaku } from "@waku/react"
 import { useSwitchChain } from "wagmi"
+import ResponsiveSettingsModal from "@/components/responsive-settings-modal"
 
 export default function CrossChainSwap() {
   const { isLoading: wakuLoading } = useWaku()
@@ -25,14 +25,17 @@ export default function CrossChainSwap() {
     tokenSelector,
     openTokenSelector,
     closeTokenSelector,
-    selectToken,
     addInputToken,
     addOutputToken,
     removeInputToken,
     removeOutputToken,
     updateInputTokenAmount,
     updateOutputTokenAmount,
+    updateOutputPercentages,
     invertSwap,
+    settings,
+    openSettings,
+    closeSettings,
   } = useSwap()
 
   const { getChainId } = useConfig()
@@ -55,9 +58,9 @@ export default function CrossChainSwap() {
   return (
     <div className="w-full max-w-6xl px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col items-center mb-12">
-        <div className="flex items-center gap-2 mb-2">
-          <h1 className="text-4xl font-bold">
+      <div className="flex flex-col items-center mb-12 mt-8 md:mt-16">
+        <div className="flex items-center gap-2 mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold">
             <span className="text-white">BEYOND</span> <span className="text-orange-500">BRIDGES</span>
           </h1>
         </div>
@@ -76,18 +79,14 @@ export default function CrossChainSwap() {
                 onCheckedChange={toggleAdvancedMode}
                 className="data-[state=checked]:bg-green-500"
               />
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Info className="h-6 w-6" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Advanced mode enables multi-token swaps</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={openSettings}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
             </div>
           </div>
 
@@ -114,6 +113,7 @@ export default function CrossChainSwap() {
                       onRemoveToken={removeInputToken}
                       onUpdateAmount={updateInputTokenAmount}
                       showBalance
+                      showUsd
                     />
                   ))}
 
@@ -160,7 +160,9 @@ export default function CrossChainSwap() {
                       onTokenSelect={(idx) => openTokenSelector("output", idx.toString())}
                       onRemoveToken={removeOutputToken}
                       onUpdateAmount={updateOutputTokenAmount}
-                      showBalance={swapData.output.network === swapData.input.network} // Show balance only if same network and single output token
+                      percentage={swapData.outputPercentages[index]}
+                      onUpdatePercentage={(idx, percentage) => updateOutputPercentages(idx, percentage)}
+                      showUsd
                     />
                   ))}
 
@@ -191,6 +193,11 @@ export default function CrossChainSwap() {
         isOpen={tokenSelector.isOpen}
         onClose={closeTokenSelector}
         title={tokenSelector.type === "input" ? "Exchange From" : "Exchange To"}
+      />
+
+      <ResponsiveSettingsModal
+        isOpen={settings.isOpen}
+        onClose={closeSettings}
       />
     </div>
   )
