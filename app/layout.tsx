@@ -27,7 +27,7 @@ export default function RootLayout({
                       src={`${baseUrl}/logo.svg`}
                       alt="iLayer Logo" />
                   </div>
-                  <h1 className="hidden md:flex text-xl font-semibold text-white">iLayer Orderbook</h1>
+                  <h1 className="hidden md:flex text-xl font-semibold text-white">iLayer</h1>
                 </div>
                 <ConnectButton
                   chainStatus="icon"
